@@ -1,0 +1,27 @@
+{
+    "package": {
+        "name": "booklet-infrastructure",
+        "repo": "wip",
+        "subject": "squarebracketassociates",
+        "desc": "Infrstructure",
+        "licenses": ["MIT"],
+        "website_url": "https://github.com/SquareBracketAssociates/Booklet-Infrastructure",
+        "issue_tracker_url": "https://github.com/SquareBracketAssociates/Booklet-Infrastructure/issues",
+        "vcs_url": "https://github.com/SquareBracketAssociates/Booklet-Infrastructure.git",
+        "labels": ["work-in-progress"]
+    },
+
+    "version": {
+        "name": "latest",
+        "desc": "Latest successful build"
+    },
+
+    "files": [
+        {
+            "includePattern": "build/infrabook.pdf",
+            "uploadPattern": "infrabook-wip.pdf",
+            "matrixParams": { "override": 1 }
+        }
+    ],
+    "publish": true
+}
