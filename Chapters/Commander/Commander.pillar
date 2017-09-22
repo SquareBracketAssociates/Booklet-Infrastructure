@@ -1,8 +1,8 @@
-{ "title": "Commander: A command pattern library" }
+!! Commander: A command pattern library
 
 In this chapter you will learn about a new library to manage commands. The library is based on three main objects: ''commands'' that represent the actions to be executed, ''command activators'' that represent ways commnads are activated (i.e., using shortcuts, menus..) and ''contexts'' which represent selection of commands.
 
-!! Commands
+!!! Commands
 
 Commander models application actions as first class objects.
 
@@ -19,7 +19,7 @@ The ==RenamePackageCommand== is defined as follows
 
 
 
-!! Commands, activators and contexts
+!!! Commands, activators and contexts
 
 The commander library is structured around three main entities:
 
@@ -148,7 +148,7 @@ The way how concrete type of activator hooks into application is responsibility 
 
 In future Commander will provide deep integration with UI. And many things will work automatically.
 
-!! Command execution
+!!! Command execution
 
 Context instances are used to perform command lookup.
 For example following expression will enumerate all shortcut activators relevant to package pane of a possible browser:
@@ -189,7 +189,7 @@ CmdShortcutCommandActivator
 
 
 
-!! Abstract menu activation
+!!! Abstract menu activation
 @abstractMenuActivation
 
 
@@ -247,7 +247,7 @@ Concrete menu activators extend menu objects and commands with specific methods 
 
 ==SD: but next section refers to this one==
 
-!! Context menu command activation
+!!! Context menu command activation
 
 To add commands into context menu use ==CmdContextMenuCommandActivator== (more details at *@abstractMenuActivation*). For example:
 
@@ -276,7 +276,7 @@ It creates menu item morph and allows subclasses to define default label and ico
 
 Subclasses can override building method ==fillContextMenu:using:== to represent themselves differently. For example they can create menu item with check box.
 
-!! Shortcut command activation
+!!! Shortcut command activation
 
 To mark commands with shortcuts use CmdShortcutCommandActivator. For example:
 
@@ -304,7 +304,7 @@ YourAppMorph >> createCommandContext
   ^YourAppContext for: self
 ]]]
 
-!! Drag and drop command activation
+!!! Drag and drop command activation
 
 Drag and drop command activation is different than others.
 To prepare command it needs two contexts. First context describes the place where drag was started. Second context describes drop target tool.
@@ -350,3 +350,5 @@ MoveMethodToClassCommand >> prepareExecutionInDropContext: aToolContext
     super prepareExecutionInDropContext: aToolContext.
     targetClass := aToolContext selectedClass
 ]]]
+
+!!! Conclusion 
