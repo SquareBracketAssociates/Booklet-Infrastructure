@@ -28,6 +28,9 @@ Calypso supports the following features:
 Calypso will be part of the new Pharo 70. In this chapter we present the architecture and the key abstractions
 supporting the extensible structure of Calypso. 
 
+Calypso manipulates navigation environments which can be scoped and queried. Queries returns cursor objects which represents stream of objects.  
+
+
 !!! Calypso navigation model
 
 
@@ -50,7 +53,7 @@ A system environment models the image. It includes a package manager, a namespac
 
 A navigation environment provides an interface to query information from it. It organizes caches for all queries. When you browse senders of message ==do:==, the same result will be returned the second time you browse the same senders. Caches optimize performance and memory usage during navigation.
 
-You can use your own navigation instance instead of global one:
+You can use your own navigation instance instead of global one. The current one is equivalent to the expression below: 
 [[[
 | env |
 env := ClySystemNavigationEnvironment over: ClySystemEnvironment currentImage
@@ -64,28 +67,66 @@ For next steps you need a scope where you will look at environment objects.
 
 You can define a scope on the environment for the full system:
 [[[
-systemScope := env systemScope
+	| env systemScope |
+	env := ClySystemNavigationEnvironment currentImage.
+	systemScope := env systemScope
 ]]]
 
 Or you can create a scope based on some concrete objects (such as classes, packages):
 [[[
-packageScope := env selectScope: ClyPackageScope of: {Point package}.
-classScope := env selectScope: ClyClassScope of: {Point. Collection}
+	| env packageScope classScope |
+	env := ClySystemNavigationEnvironment currentImage.
+	packageScope := env selectScope: ClyPackageScope of: {Point package}.
+	classScope := env selectScope: ClyClassScope of: {Point. Collection}.
 ]]]
 
 
-!!! Queries
 
-With scope you can evaluate queries:
 [[[
-packageScope query: ClySortedClasses
-classScope query: ClySortedMethods
-packageScope query: (ClyMessageSenders of: #(do: x))
-classScope query: (ClyMessageImplementors of: #(select: y:))
+	| env classScope |
+	env := ClySystemNavigationEnvironment currentImage.
+	classScope := env selectScope: ClyClassScope of: {Point. Collection}
+	classScope allClasses
 ]]]
-Any query returns instance of cursor which provides stream access to result (details below).
 
-Result is represented by requested ==ClyEnvironmentContent== subclass. In first example it is instance of ==ClySortedClasses== which is sent as argument. Query method accepts query instance (subclasses of ClyEnvironmentQuery) or compatible object which implements ==asEnvironmentQuery== message. And class of result itself plays role of most trivial query ==ClyEnvironmentSimpleQuery==. Simple query is responsible to return all objects accessible from given scope in requested form. For example you can query all classes in hierarchical form:
+@@todo why this is not working. 
+
+!!! Queries and their results: cursors
+Once you get a scope you can execute queries:
+
+[[[
+| env packageScope classScope |
+env := ClySystemNavigationEnvironment currentImage.
+packageScope := env selectScope: ClyPackageScope of: {Point package}.
+classScope := env selectScope: ClyClassScope of: {Point. Collection}.
+
+packageScope query: ClySortedClasses
+"returns all the classes in the package but sorted"
+
+classScope query: ClySortedMethods
+"returns all the methods of the class sorted"
+
+packageScope query: (ClyMessageSenders of: #(do: x))
+"returns all the senders of one of the message do: or x"
+
+classScope query: (ClyMessageImplementors of: #(select: y:))
+"returns all the class implementing any of select: or y:"
+]]]
+
+
+
+
+
+Any query returns instance of cursor which provides stream access to result as we will shown below.
+STEF HERE
+
+
+Result is represented by requested ==ClyEnvironmentContent== subclass. 
+
+STEF: is a cursor an instance of ClyEnvironmentContent?
+
+
+In first example it is instance of ==ClySortedClasses== which is sent as argument. Query method accepts query instance (subclasses of ClyEnvironmentQuery) or compatible object which implements ==asEnvironmentQuery== message. And class of result itself plays role of most trivial query ==ClyEnvironmentSimpleQuery==. Simple query is responsible to return all objects accessible from given scope in requested form. For example you can query all classes in hierarchical form:
 
 [[[
 packageScope query: ClyHierarchicallySortedClasses
