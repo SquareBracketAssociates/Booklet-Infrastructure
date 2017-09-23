@@ -123,7 +123,7 @@ STEF HERE
 
 Result is represented by requested ==ClyEnvironmentContent== subclass. 
 
-STEF: is a cursor an instance of ClyEnvironmentContent?
+STEF: is a cursor an instance of ClyEnvironmentContent? No apparently so what is the relationships?
 
 
 In first example it is instance of ==ClySortedClasses== which is sent as argument. Query method accepts query instance (subclasses of ClyEnvironmentQuery) or compatible object which implements ==asEnvironmentQuery== message. And class of result itself plays role of most trivial query ==ClyEnvironmentSimpleQuery==. Simple query is responsible to return all objects accessible from given scope in requested form. For example you can query all classes in hierarchical form:
@@ -139,7 +139,7 @@ classScope query: (ClyMessageSenders of: #(do:) as: ClyHierarchicallySortedMetho
 ]]]
 
 !!! Cursor objects
-As was mentioned above actual result of ==query:== is cursor object, the instance of ==ClyEnvironmentCursor==:
+As was mentioned above, the actual result of ==query:== is cursor object, the instance of ==ClyEnvironmentCursor==:
 
 [[[
 cursor := classScope query: ClySortedMethods
