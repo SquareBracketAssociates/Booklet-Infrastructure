@@ -1,10 +1,10 @@
-{ "title": "Basys Network" }
+!! Basys Network 
 
 This chapter presents the Basys package. Basys implements an abstract layer for networks which require bidirectional communication between clients and servers. Basys manages connections in such a way that sending and receiving data can be performed independently and simultaneously.
 
 
 
-!! Basics
+!!! Basics
 
 Each Basys connection runs its own incoming data loop which processes received data asynchronously. Every received data is processed in a separate thread. Communication between client and server are equivalent in both directions. There is only one difference: a server should accept connection from a client and it cannot establish new one by itself.
 
@@ -38,7 +38,7 @@ network remotePeerAt: (TCPAddress localAt: 40433)
 ]]]
 
 
-!! Network peers
+!!! Network peers
 
 
 +A peer has a local and remote peers.>file://figures/networkStructure.jpg|width=60|label=fig:networkStructure+
@@ -93,7 +93,7 @@ network startServerOn: 40433
 To perform requests, passive peers are waiting for free connections. They cannot create new connection but have to wait when all connections are busy or none exists.
 
 
-!!Peers identification
+!!!Peers identification
 
 Basys performs identification procedure for all established connections.
 It should ensure that all client connections belong to same peer instance on server.
@@ -113,7 +113,7 @@ BasysActivePeer >> establishNewConnection
 
 The protocol for peer identification (message ==identifyLocalPeerOn:==) is the responsibility of concrete network implementations.
 
-!!!On server side
+!!!!On server side
 
 For every new connection, a ==BasysServer== asks its unique network to create a new passive peer and sends incoming connection to it. Then a client initiates identification procedure for this connection. It should take care of three cases:
 -A server should detect that new connection belongs to existing peer. In that case connection should be migrated to the existing peer and anonymous peer should be removed.
@@ -135,7 +135,7 @@ BasysPassivePeer >> beIdentifiedAs: peerId
 ]]]
 
 
-!!!On client side
+!!!!On client side
 A client establishes a new connection to a server. Then it initiates the identification procedure. At the end, it receives the server id. There are two cases here:
 - the received peer id belongs to an existing passive peer (if client is server itself and it already accepted connections from server),
 - there is no existing peers with received id.
@@ -155,7 +155,7 @@ BasysActivePeer >> assignId: peerId receivedFrom: aBasysConnection
 	registeredPeer becomeActiveToReplaceSamePeer: self
 ]]]
 
-!!Basys concretisation
+!!!Basys concretisation
 
 Each application that wants to take advantage of Basys should specialize five hooks. Basys implementors should subclass the class ==BasysNetwork== and answer the following five questions by defining the corresponding methods:
 

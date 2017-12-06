@@ -1,7 +1,8 @@
-{ "title": "Seamless. Transparent network of objects" }
+!! Seamless: Transparent network of objects
 
 Seamless implements Basys network to organize transparent communication between distributed objects.
 
+!!! Overview
 SeamlessNetwork instance should be created on client and server.
 [[[
 network := SeamlessNetwork new.
@@ -75,7 +76,8 @@ Seamless also supports async evaluation of blocks without waiting result:
 result := OrderedCollection new.
 remotePeer evaluateAsync: [result add: 1000 factorial]. "it will not wait result"
 ]]]
-!!Transfer strategies
+
+!!! Transfer strategies
 @transferStrategies
 By default objects transferred by reference. But some objects like numbers and strings are transferred by value. Classes can override this behaviour by implementing #seamlessDefaultTransferStrategy.
 

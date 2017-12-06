@@ -115,6 +115,9 @@ classScope query: (ClyMessageImplementors of: #(select: y:))
 
 
 
+LocalClassScope you will see only things which are defined in class itself.
+There are also ClassHierarchyScope subclasses. They show you all things which are visible from related classes depending on what type of hierarchy they represent (there are ClySubclassScope, ClyInheritedTraitScope, etc).
+
 
 
 Any query returns instance of cursor which provides stream access to result as we will shown below.
