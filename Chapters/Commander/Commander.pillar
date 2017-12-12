@@ -1,6 +1,6 @@
 !! Commander: A command pattern library
 
-In this chapter you will learn about a new library to manage commands. The library is based on three main objects: ''commands'' that represent the actions to be executed, ''command activators'' that represent ways commnads are activated (i.e., using shortcuts, menus..) and ''contexts'' which represent selection of commands.
+In this chapter you will learn about a new library to manage commands. The library is based on three main objects: ''commands'' that represent the actions to be executed, ''command activation strategies'' that represent ways commands are activated (i.e., using shortcuts, menus..) and ''contexts'' which represent the state of application, users of commands.
 
 !!! Commands
 
@@ -12,28 +12,45 @@ Every action is implemented as separate command class (subclass of ==CmdCommand=
 
 The ==RenamePackageCommand== is defined as follows
 
-
 [[[
-	SD:Denis please add it
+CmdCommand subclass: #SycRenamePackageCommand
+	instanceVariableNames: 'package newName'
+	classVariableNames: ''
+	package: 'SystemCommands-PackageCommands'
+
+RenamePackageCommand>>execute
+	package renameTo: newName
 ]]]
 
+Also accessors and constructor are needed to be able create command instances manually:
 
+[[[
+SycRenamePackageCommand class>>package: aPackage to: newNameString
+   ^self new
+	 		package: aPackage;
+			newName: newNameString
+]]]
 
-!!! Commands, activators and contexts
+Now in playground you are able rename package using this command:
+
+[[[
+command := SycRenamePackageCommand package: #'YourPackage' asPackage to: 'YourPackage2'.
+command execute.
+]]]
+
+!!! Commands, activations and contexts
 
 The commander library is structured around three main entities:
 
 - ''commands'' that represent the actions to be executed,
-- ''command activators'' that represent ways commands are activated (i.e., using shortcuts, menus..) and
--''contexts'' which represent selection of commands.
-
-
+- ''command activation strategies'' that represent ways commands are activated (i.e., using shortcuts, menus..) and
+- ''contexts'' which represent the applications in particular state.
 
 @@todo SD:here we should have a diagram
 
 
 
-!!! Activators
+!!! Activation strategy
 
 Commands are reusable objects and applications provide various ways to access them: shortcuts, context menu, buttons, etc..
 This information is attached to command classes as activator objects. Currently there are three types of activators:
@@ -351,4 +368,4 @@ MoveMethodToClassCommand >> prepareExecutionInDropContext: aToolContext
     targetClass := aToolContext selectedClass
 ]]]
 
-!!! Conclusion 
+!!! Conclusion
