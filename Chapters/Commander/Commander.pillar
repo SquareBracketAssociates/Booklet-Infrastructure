@@ -53,33 +53,35 @@ The commander library is structured around three main entities:
 !!! Activation strategy
 
 Commands are reusable objects and applications provide various ways to access them: shortcuts, context menu, buttons, etc..
-This information is attached to command classes as activator objects. Currently there are three types of activators:
-- ==CmdShortcutCommandActivator==
-- ==CmdContextMenuCommandActivator==
-- ==CmdDragAndDropCommandActivator==
+This information is attached to command classes as activation strategies. Currently there are three types of activations:
+- ==CmdShortcutCommandActivation==
+- ==CmdContextMenuCommandActivation==
+- ==CmdDragAndDropCommandActivation==
 
-Activators are declared in command class side methods tagged with pragma ==<commandActivator>==.
-For example, the following method will allow ==RenamePackageCommand== to be executed by shortcut in a given system browser:
+Strategies annotate command as class annotations. Look at project ClassAnnotation for details.
+For example following method will allow RenamePackageCommand to be executed by shortcut in possible package browser:
 
 [[[
-RenamePackageCommand class >> packageBrowserShortcutActivator
-  <commandActivator>
-  ^CmdShortcutCommandActivator by: $r meta for: PackageBrowserContext
+RenamePackageCommand class>>packageBrowserShortcutActivation
+    <classAnnotation>
+    ^CmdShortcutCommandActivation by: $r meta for: PackageBrowser
 ]]]
 
 
-Similarly the following method ==packageBrowserMenuActivator== define that the ==RenamePackageCommand== can be executed from a context menu. Note the use of ==CmdContextMenuCommandActivator== in the method, while the previous one was using ==CmdShortcutCommandActivator==.
+Similarly the following method ==packageBrowserMenuActivation== defines that the ==RenamePackageCommand== can be executed from a context menu. Note the use of ==CmdContextMenuCommandActivation== in the method, while the previous one was using ==CmdShortcutCommandActivation==.
 
 [[[
-RenamePackageCommand class >> packageBrowserMenuActivator
-  <commandActivator>
-  ^CmdContextMenuCommandActivator byRootGroupItemFor: PackageBrowserContext
+RenamePackageCommand class>>packageBrowserMenuActivation
+    <classAnnotation>
+    ^CmdContextMenuCommandActivation byRootGroupItemFor: PackageBrowser
 ]]]
 
 
 !!! Contexts
 
-Activators are always declared with the application context where they can be applied (==PackageBrowserContext== in example).
+Activation strategies are always declared with the application context where they can be applied.
+In simplest case it can be just a class of command user application (==PackageBrowser== in example).
+
 An application should provide such contexts as subclasses of ==CmdToolContext== with information related to the  application state.
 
 Every widget can bring its own context to interact with application as separate tool.
