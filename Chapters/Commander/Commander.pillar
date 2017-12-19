@@ -10,45 +10,117 @@ Every action is implemented as separate command class (subclass of ==CmdCommand=
 
 !!! An example
 
-The ==RenamePackageCommand== is defined as follows
+Let's look how we can apply commands to control simple contact book.
+The code of example is packaged inside Commander-Examples package. So you can load it and play.
+
+In the domain we need two classes:
+
+1. Contact with name and phone:
 
 [[[
-CmdCommand subclass: #SycRenamePackageCommand
-	instanceVariableNames: 'package newName'
+Object subclass: #Contact
+	instanceVariableNames: 'name phone'
 	classVariableNames: ''
-	package: 'SystemCommands-PackageCommands'
+	package: 'Commander-Examples'
 
-RenamePackageCommand>>execute
-	package renameTo: newName
+Contact>>printOn: aStream
+	super printOn: aStream.
+
+	aStream nextPut: $(.
+	aStream nextPutAll: name.
+	aStream nextPut: $).
 ]]]
 
-Also accessors and constructor are needed to be able create command instances manually:
+2. Contact book with collection of contacts:
 
 [[[
-SycRenamePackageCommand class>>package: aPackage to: newNameString
+Object subclass: #ContactBook
+	instanceVariableNames: 'contents'
+	classVariableNames: ''
+	package: 'Commander-Examples'
+
+ContactBook>>addContact: aContact
+	contents add: aContact
+
+ContactBook>>add: contactName phone: phone
+	| contact |
+	contact := CmdContact named: contactName phone: phone.
+	self addContact: contact.
+	^contact
+
+ContactBook>>includesContact: aContact
+	^ contents includes: aContact
+]]]
+
+Now we can create ==RenameContactCommand== command to rename given contact:
+
+[[[
+CmdCommand subclass: #RenameContactCommand
+	instanceVariableNames: 'contact newName'
+	classVariableNames: ''
+	package: 'Commander-Examples'
+
+RenameContactCommand>>execute
+	contact name: newName
+]]]
+
+Also we need accessors and constructors for these classes. For example for the command it would be:
+
+[[[
+RenameContactCommand class>>contact: aContact to: newNameString
    ^self new
-	 		package: aPackage;
+	 		contact: aContact;
 			newName: newNameString
 ]]]
 
-Now in playground you are able rename package using this command:
+Now in playground we are able rename contact using this command:
 
 [[[
-command := SycRenamePackageCommand package: #'YourPackage' asPackage to: 'YourPackage2'.
+contact := Contact new.
+command := RenameContactCommand contact: contact to: 'John Smith'.
 command execute.
 ]]]
 
-!!! Commands, activations and contexts
+Before we continue we should write simple UI which will show contact book contents.
+To follow you should be fimilar with Spec UI framework.
+We need just one presenter which will show contact table:
 
-The commander library is structured around three main entities:
+[[[
+ComposablePresenter subclass: #ContactBookPresenter
+	instanceVariableNames: 'table contactBook'
+	classVariableNames: ''
+	package: 'Commander-Examples'
 
-- ''commands'' that represent the actions to be executed,
-- ''command activation strategies'' that represent ways commands are activated (i.e., using shortcuts, menus..) and
-- ''contexts'' which represent the applications in particular state.
+ContactBookPresenter>>initializeWidgets
+	table := self newList.
+	table numberOfColumns: 2 withWidths: #(250 250).
+	table displayBlock: [ :contact | {contact name. contact phone} ].
+	table items: contactBook contents
+]]]
 
-@@todo SD:here we should have a diagram
+And let's make reusable book as class side variable:
 
+[[[
+ContactBook>>family
+	^family ifNil: [
+		family := self new
+			add: 'John' phone: '342 345';
+			add: 'Bill' phone: '123 678';
+			add: 'Marry' phone: '789 567';
+			yourself]
+]]]
 
+Now we are able show family phone book with Spec UI:
+
+[[[
+ContactBookPresenter class>>familyExample
+	<example>
+	^ (self on: ContactBook family) openWithSpec
+]]]
+
+We put it as example. So you can run it from the browser using suitable icon:
+
++Family book window.>file://figures/Family.png+
 
 !!! Activation strategy
 
@@ -59,22 +131,117 @@ This information is attached to command classes as activation strategies. Curren
 - ==CmdDragAndDropCommandActivation==
 
 Strategies annotate command as class annotations. Look at project ClassAnnotation for details.
-For example following method will allow RenamePackageCommand to be executed by shortcut in possible package browser:
+For example following method will allow RenameContactCommand to be executed by shortcut in the context of our presenter:
 
 [[[
-RenamePackageCommand class>>packageBrowserShortcutActivation
+RenameClassCommand class>>shortcutActivation
     <classAnnotation>
-    ^CmdShortcutCommandActivation by: $r meta for: PackageBrowser
+    ^CmdShortcutCommandActivation by: $r meta for: ContactBookPresenter
 ]]]
 
-
-Similarly the following method ==packageBrowserMenuActivation== defines that the ==RenamePackageCommand== can be executed from a context menu. Note the use of ==CmdContextMenuCommandActivation== in the method, while the previous one was using ==CmdShortcutCommandActivation==.
+Similarly the following method ==menuActivation== defines that the ==RenameContactCommand== can be executed from a context menu. Note the use of ==CmdContextMenuCommandActivation== in the method, while the previous one was using ==CmdShortcutCommandActivation==.
 
 [[[
-RenamePackageCommand class>>packageBrowserMenuActivation
+RenameContactCommand class>>menuActivation
     <classAnnotation>
-    ^CmdContextMenuCommandActivation byRootGroupItemFor: PackageBrowser
+    ^CmdContextMenuCommandActivation byRootGroupItemFor: ContactBookPresenter
 ]]]
+
+Now if you will open window neither shortcuts or context menu will work. The problem is that Spec has no information about Commander. It only provides basic functionality to define menu and shortcuts on low level. But Commander provides integration with Spec which allow enable Commander inside Spec presenters.
+
+Try modify ==initializeWidgets== method to activate context menu:
+[[[
+ContactBookPresenter>>initializeWidgets
+	table := self newList.
+	table numberOfColumns: 2 withWidths: #(250 250).
+	table displayBlock: [ :contact | {contact name. contact phone} ].
+	table items: contactBook contents
+
+	table enableCommanderMenuBy: self
+]]]
+
+===enableCommanderMenuBy:=== adds context menu to table presenter which will be filled by commands defined in context of presenter in the argument (ContactBookPresenter).
+
+Now if you will open presenter and make right click on table you will see menu with single item named "RenameContactCommand".
+To specify better name for menu you need to define the method ==defaultMenuItemName==:
+
+[[[
+RenameContactCommand>>defaultMenuItemName
+	^'Rename'
+]]]
+
+Now if you will click on 'Rename' menu item you will got exception. From the debugger you can investigate that command instance is not initialized: ==contact== and ==newName== are nil.
+Commander provides method where commands should retrieve their state from given context instance:
+
+[[[
+RenameContactCommand>>prepareExecutionInContext: aToolContext
+	super prepareExecutionInContext: aToolContext.
+
+	contact := aToolContext selectedContact.
+
+	newName := UIManager default
+		request: 'New name of the contact'
+		initialAnswer: contact name
+		title: 'Rename a contact'.
+	newName isEmptyOrNil | (newName = contact name) ifTrue: [ ^ CmdCommandAborted signal ]
+]]]
+
+By default due to Spec integration Commander will pass presenter instance to aToolContext argument. But in general it is not enough and you will see example later.
+
+Now you only need to know that context represents application state and here we define what information is required to be able reuse commands in various applications.
+
+In our example we expect to receive ==selectedContact== from the context. But we are requesting ==newName== directly from user.
+Notice that Commander provides way how to define specific preparation method for specific application context. By default it is ==prepareExecutionInContext:== but it can be different for advanced scenarious.
+
+So we need ==selectedContact== for presenter to make it compatible to context of our command:
+
+[[[
+ContactBookPresenter>>selectedContact
+	^table selectedItem
+]]]
+
+Now if you will click on 'Rename' item you will be requested for new contact name. But after submit the view will be not updated. Reopen presenter window to see result.
+
+It is your responsibility to manage updates between application and model. So you can use some event system which will automatically udpate view after modification of model.
+
+But Commander provides very simple mechanizm to apply result of command which can be also used to update the view.
+
+==applyResultInContext:== is called when command is executed. You can implement it on your commands to produce desired effect in context of your application:
+
+[[[
+RenameContactCommand>>applyResultInContext: aToolContext
+	super applyResultInContext: aToolContext.
+
+	aToolContext updateView
+]]]
+
+Here we require from context to be able update the view. And presenter should support it:
+
+[[[
+ContactBookPresenter>>updateView
+	table items: contactBook contents
+]]]
+
+And finally context menu item is working fine: it asks new name and table updates after submit.
+
+At the end of this section you can enable shortcuts on presenter. Just implement method ==ensureKeyBindingsFor==:
+
+[[[
+ContactBookPresenter>>ensureKeyBindingsFor: aWidget
+	self enableCommanderShortcutsIn: aWidget
+]]]
+
+Now reopen window, select contact and press cmd+r (on Mac). You will get new name dialog which will rename selected contact at the end.
+
+!!! Commands, activations and contexts
+
+The commander library is structured around three main entities:
+
+- ''commands'' that represent the actions to be executed,
+- ''command activation strategies'' that represent ways commands are activated (i.e., using shortcuts, menus..) and
+- ''contexts'' which represent the applications in particular state.
+
+@@todo SD:here we should have a diagram
 
 
 !!! Contexts
