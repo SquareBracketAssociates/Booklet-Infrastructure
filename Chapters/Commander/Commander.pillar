@@ -52,7 +52,7 @@ ContactBook>>includesContact: aContact
 	^ contents includes: aContact
 ]]]
 
-Now we can create ==RenameContactCommand== command to rename given contact:
+Now we can create ==RenameContactCommand== to rename given contact:
 
 [[[
 CmdCommand subclass: #RenameContactCommand
@@ -132,7 +132,7 @@ This information is attached to command classes as activation strategies. Curren
 
 Strategies annotate command as contextual class annotations. Look at project ClassAnnotation for details.
 Strategies are always attached to commands with concrete application context where they can be used.
-In simplest case it can be just a class of user application or widget like ==ContactBookPresenter== in example.
+In simplest case it can be just a class of user application or widget like ==ContactBookPresenter==.
 
 For example following method will allow RenameContactCommand to be executed by shortcut in the context of our presenter:
 
@@ -150,7 +150,7 @@ RenameContactCommand class>>menuActivation
     ^CmdContextMenuCommandActivation byRootGroupItemFor: ContactBookPresenter
 ]]]
 
-If you will open window neither shortcuts or context menu will work. The problem is that Spec has no information about Commander. It only provides basic functionality to define menu and shortcuts on low level. But Commander provides integration with Spec which allow enable Commander inside Spec presenters.
+Now if you will open window neither shortcuts or context menu will work. The problem is that Spec has no information about Commander. Spec only provides basic functionality to define menu and shortcuts on low level. So you should manually activate Commander in your Spec presenter.
 
 Try modify ==initializeWidgets== method to activate context menu:
 [[[
@@ -163,9 +163,9 @@ ContactBookPresenter>>initializeWidgets
 	table enableCommanderMenuBy: self
 ]]]
 
-===enableCommanderMenuBy:=== adds context menu to table presenter which will be filled by commands defined in context of presenter in the argument (ContactBookPresenter).
+===enableCommanderMenuBy:=== adds context menu to table presenter which will be filled by commands defined in context of presenter in the argument (==ContactBookPresenter==).
 
-In this case the right click on table will show the menu with single item named "RenameContactCommand".
+In this case the right click on table will show the menu with single item named ==RenameContactCommand==.
 To specify better name for menu you need to define the method ==defaultMenuItemName==:
 
 [[[
@@ -174,7 +174,7 @@ RenameContactCommand>>defaultMenuItemName
 ]]]
 
 Now if you will click on 'Rename' menu item you will got exception. From the debugger you can investigate that command instance is not initialized: ==contact== and ==newName== are nil.
-Commander provides method where commands should retrieve their state from given context instance:
+Commander provides method where command should retrieve required state from given context instance:
 
 [[[
 RenameContactCommand>>prepareExecutionInContext: aToolContext
@@ -189,10 +189,10 @@ RenameContactCommand>>prepareExecutionInContext: aToolContext
 	newName isEmptyOrNil | (newName = contact name) ifTrue: [ ^ CmdCommandAborted signal ]
 ]]]
 
-By default due to Spec integration Commander will pass presenter instance to aToolContext argument. But in general it is not enough and you will see example later.
-Now you only need to know that context represents application state and here we define what information is required to be able reuse commands in various applications.
+By default (with help of Spec integration) Commander will pass presenter instance to aToolContext argument. But in general it is not enough and you will see example later.
+Now you only need to know that context represents application state and in ==prepare== method we define what information is required to be able reuse commands in various applications.
 
-In our example we expect to receive ==selectedContact== from the context. But we are requesting ==newName== directly from user.
+In our example we expect to receive ==selectedContact== from the context. And we request ==newName== directly from user.
 Notice that Commander provides way how to define specific preparation method for specific application context. By default it is ==prepareExecutionInContext:== but it can be different for advanced scenarious.
 
 So we need ==selectedContact== for presenter to make it compatible to context of our command:
@@ -204,7 +204,7 @@ ContactBookPresenter>>selectedContact
 
 Now if you will click on 'Rename' item you will be requested for new contact name. But after submit the view will be not updated. Reopen presenter window to see result.
 
-It is your responsibility to manage updates between application and model. So you can use some event system which will automatically udpate view after modification of model.
+It is your responsibility to manage updates between application and model. You can use some event system which will automatically udpate view after modification of model.
 
 But Commander provides very simple mechanizm to apply result of command which can be also used to update the view.
 
@@ -226,16 +226,16 @@ ContactBookPresenter>>updateView
 
 And finally context menu item is working fine: it asks new name and table updates after submit.
 
-At the end of this section you can enable shortcuts on presenter. Just implement method ==ensureKeyBindingsFor==:
+Now we can enable shortcuts on presenter. Just implement method ==ensureKeyBindingsFor==:
 
 [[[
 ContactBookPresenter>>ensureKeyBindingsFor: aWidget
 	self enableCommanderShortcutsIn: aWidget
 ]]]
 
-Then reopen window, select contact and press cmd+r (on Mac). You will get new name dialog which will rename selected contact at the end.
+Then reopen window, select contact and press cmd+r (on Mac). You will get same UI dialog as in case of menu.
 
-At the end try create few other commands. Now with all required methods in presenter the creation of new commands are very straightforward process
+At the end try create few other commands. With all required methods in presenter the creation of new commands are very straightforward process:
 
 1. Command to modify contact phone number:
 
@@ -308,17 +308,17 @@ RemoveContactCommand>>defaultMenuItemName
 
 Here we extend our requirement to the context: to be able remove contact we also need a contact book instance where we should perform deletion.
 
-And we implement new method ==selectedContactBook== in presenter:
+And we implement new method ==selectedContactBook== in the presenter:
 
 [[[
 ContactBookPresenter>>selectedContactBook
 	^contactBook
 ]]]
 
-Notice that we could call from the accessor ==contactBook== from aToolContext. But it leads to bad reusability of command because the name ==contactBook== means single book instance while other applications can provide multiple of them in same way like our current presenter provides multiple contacts.
-So in sense of tool context it is better to call ==selectedContactBook== while it is better reflects abstract requirement of information.
+Notice that we could use accessor ==contactBook== from aToolContext. But it leads to bad reusability of command because the name ==contactBook== means single book instance while other applications can provide multiple of them in same way like our current presenter provides multiple contacts.
+So in sense of tool context it is better to call ==selectedContactBook== because it is better reflects abstract requirement of information.
 
-And activation methods:
+Activation methods:
 
 [[[
 RemoveContactCommand class>>contextMenuActivation
@@ -348,7 +348,7 @@ RenameContactCommand class>>canBeExecutedInContext: aToolContext
 	^aToolContext isContactSelected
 ]]]
 
-(As default implementation any command can be executed in any context. So this method returnes true)
+(As default implementation any command can be executed in any context. So this method returns true)
 
 And presenter should implement ==isContactSelected==:
 [[[
@@ -364,11 +364,10 @@ There are other settings:
 - menu group of item
 - separator between items
 - menu icon
-- special representation of menu item
+- custom menu item
 
 !!!! Menu item order
 
-Order of item should be specified in context menu activation method.
 In our example 'Rename' item was placed at the end of menu because by default items are sorted in alphabet order.
 To change the order the activation strategy should be created with extra parameter:
 
@@ -394,7 +393,7 @@ CmdMenuGroup subclass: #PhoneMenuGroup
 	package: 'Commander-Examples'
 ]]]
 
-And then just create method activation with group class parameter:
+And then just create activation strategy with extra group class parameter:
 
 [[[
 ChangePhoneCommand>>contextMenuActivation
@@ -410,10 +409,17 @@ PhoneMenuGroup>>name
 	^'Phone operations'
 ]]]
 
+If you need deep menu structure just define class side method ==parent== in your very child group:
+
+[[[
+DeepChildrenMenuGroup class>>parentGroup
+	^PhoneMenuGroup
+]]]
+
 !!!! Menu separators
 
 Commander models separators as inlined menu group.
-You only need to mark target group as inlined and all its items will be added to the parent with separators:
+You only need to mark target group as inlined and all its items will be added to the parent with required separator lines:
 
 [[[
 PhoneMenuGroup>>isInlined
@@ -422,19 +428,19 @@ PhoneMenuGroup>>isInlined
 
 !!!! Menu icons
 
-To specify icon command should implement the method ==setUpIconForMenuItem:==
+To specify icon the command should implement the method ==setUpIconForMenuItem:==
 
 [[[
 RemoveContactCommand>>setUpIconForMenuItem: aMenuItemMorph
 	self setUpIconNamed: #removeIcon forMenuItem: aMenuItemMorph
 ]]]
 
-It looks a bit complicated but idea is to be able create dynamic and complex icons based on commands state. For this reason it is not enough to only return icon name from some simple icon method.
+It looks a bit complicated but idea is to be able create dynamic and complex icons based on command state. For this reason it is not enough to only return icon name from some simple icon method.
 
 !!!! Custom menu items
 
-When Commander builds context menu it as command itself to build menu item view element (a morph).
-By default CmdCommand returns standard menu item morph but subclasses can redefine it to be represented in menu specifically.
+When Commander builds context menu it asks command itself to build view for menu item (a morph).
+By default CmdCommand returns standard menu item morph but subclasses can redefine it to be represented specifically.
 
 For example we can represent item with different color:
 
@@ -450,9 +456,9 @@ CmdRenameContactCommand>>fillContextMenu: aMenu using: aCommandActivator
 ]]]
 
 You can notice here that command can be represented by multiple menu items. ==fillContextMenu== method provides full control under menu.
-For example you can generate multiple command copies with some specific parameter. It leads to highly dynamic menus which could be needed for some special applications.
+For example you can generate multiple command copies with some specific parameters. It leads to highly dynamic menus which could be needed for some special applications.
 
-Also same kind of flexibility is available for groups. Looat at default implementation of menu group for example:
+Also same kind of flexibility is available for groups. Look at default implementation of menu group for example:
 
 [[[
 CmdMenuGroup>>buildContextSubMenuIn: aMenu
@@ -467,6 +473,9 @@ CmdMenuGroup>>buildContextSubMenuIn: aMenu
 You can redefine it in your own group to build very special menus.
 
 !!! Drag and drop example
+
+In this section you will learn how activate commands using drag and drop operations. And you will see why widget could not be a context in general.
+
 
 
 
