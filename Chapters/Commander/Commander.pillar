@@ -330,9 +330,56 @@ RemoveContactCommand class>shortcutActivation
   ^CmdShortcutCommandActivation by: $x meta for: CmdContactBookPresenter
 ]]]
 
+3. Command to add contact:
+
+[[[
+CmdCommand subclass: #AddContactCommand
+	instanceVariableNames: 'contactBook contact'
+	classVariableNames: ''
+	package: 'Commander-Examples'
+
+AddContactCommand>>execute
+	contactBook addContact: contact
+
+AddContactCommand>>prepareFullExecutionInContext: aToolContext
+	| nameAndPhone pair |
+	super prepareFullExecutionInContext: aToolContext.
+	contactBook := aToolContext selectedContactBook.
+
+	nameAndPhone := UIManager default
+		request: 'Enter new contact name and phone (split by comma)'
+		initialAnswer: 'name;phone'
+		title: 'Create new contact'.
+	nameAndPhone isEmptyOrNil ifTrue: [ ^ CmdCommandAborted signal ].
+	pair := (';' split: nameAndPhone).
+	contact := CmdContact named: pair first phone: pair last
+
+AddContactCommand>>applyResultInContext: aToolContext
+	super applyResultInContext: aToolContext.
+
+	aToolContext updateView
+
+AddContactCommand>>defaultMenuItemName
+	^'New contact'
+]]]
+
+In preparation we request user for both name and phone number in simple comma separated form.
+
+And activation methods:
+
+[[[
+AddContactCommand class>>contextMenuActivation
+	<classAnnotation>
+  ^CmdContextMenuCommandActivation byRootGroupItemFor: CmdContactBookPresenter
+
+AddContactCommand class>shortcutActivation
+	<classAnnotation>
+  ^CmdShortcutCommandActivation by: $n meta for: CmdContactBookPresenter
+]]]
+
 +Family book menu>file://figures/FamilyWithMenu.png+
 
-It is up to you to maintain commands in good shape. In this example commands use same state ==contact== and duplicate method ==applyResultInContext:==.
+It is up to you to maintain commands in good shape. For example commands here use same state ==contact== and duplicate method ==applyResultInContext:==.
 You can refactor it with your taste, extract common superclass and so on.
 
 !!! Extra command conditions
@@ -474,10 +521,190 @@ You can redefine it in your own group to build very special menus.
 
 !!! Drag and drop example
 
-In this section you will learn how activate commands using drag and drop operations. And you will see why widget could not be a context in general.
+In this section you will learn how activate commands using drag and drop operation. And you will see why widget could not be a context for commands in general.
+
+During drag and drop operation user grabs some element from one widget and drops it on another widget. And the application handles special event which brings together the information about source and target elements.
+
+Commander uses drag and drop to prepare commands in two steps:
+
+1) When user starts drag some element from the widget Commander finds and prepares commands in context of this widget. And found commands start to be passengers of drag operation.
+2) And when user drops element to the widget Commander filters current dragged commands using declared drop context and the context of target widget. At the end it executes found command.
+
+If Commander does not find any commands in drag context the drag and drop operation is not started.
+
+If Commander does not find any command suitable for drop context it forbids drop on current widget. UI gives visual feedback for the places where drop can be executed. And when drop is forbidden you will not see this effect.
+
+If Commander finds multiple commands suitable for the drop context it will show menu to request user to choose concrete action.
+
+Now to continue our example we can annotate ==AddContactCommand== with drag and drop activation:
+
+[[[
+AddContactCommand class>>dragAndDropActivation
+	<classAnnotation>
+	^CmdDragAndDropCommandActivation for: ContactBookPresenter toDropIn: ContactBookPresenter
+]]]
+
+First parameter describes context where drag can be started. And last parameter is a context where drop can be executed. In example both are the same presenter context which enables drag and drop contacts between contact books using our Spec UI.
+
+As in example with context menu and shortcuts we also need support methods to prepare command instances. According to described two steps we need two methods:
+
+[[[
+AddContactCommand>>prepareExecutionInDragContext: aToolContext
+	super prepareExecutionInDragContext: aToolContext.
+
+	contact := aToolContext selectedContact
+]]]
+
+First method ==prepareExecutionInDragContext== extracts information from the context of drag operation. In that example we decide that command can be only executed by drag of selected contact.
+
+[[[
+AddContactCommand>>prepareExecutionInDropContext: aToolContext
+	super prepareExecutionInDropContext: aToolContext.
+
+	contactBook := aToolContext selectedContactBook
+]]]
+
+And in second method ==prepareExecutionInDropContext== we extract the rest information from the context where the drop was executed. In that case we decide that command can be only executed by drop into the contact book.
+
+Now drag and drop should work. To play with it let's create another book of coworkers on the class side of ==ContactBook==:
+
+[[[
+ContactBook class>>coworkers
+	^coworkers ifNil: [
+		coworkers := self new
+			add: 'Stef' phone: '112 378';
+			add: 'Pavel' phone: '898 678';
+			add: 'Marcus' phone: '444 888';
+			yourself]
+]]]
+
+And we need extra example method on the class side of presenter:
+
+[[[
+ContactBookPresenter class>>coworkersExample
+	<example>
+	^ (self on: CmdContactBook coworkers) openWithSpec
+]]]
+
+Now open two windows: coworkersExample and familyExample. And drag and drop items between them.
+
+You can notice that you are able dublicate contact when it already exists in target book. Also dublication happens when you drop contact in same source book.
+
+To prevent it you can specify extra runtime condition ==canBeExecutedInDropContext:== as in case of full command execution:
+
+[[[
+AddContactCommand>>canBeExecutedInDropContext: aToolContext
+	^aToolContext isContactBookSelected
+		and: [ (aToolContext selectedContactBook includesContact: contact) not ]
+]]]
+
+Notice that this method is on instance side and it can use the data which was extracted from drag context. Here we check that ==contact== not exists in target contact book.
+When Commander collects commands at the time of drag operation it prepares it using method ==prepareExecutionInDragContext==. So at the time of drop operation all found commands are initialized with information from drag context.
+
+Now only book which not includes dragged contact will allow drop.
+
+!!! Complex contexts
+
+In examples command context was always represented by presenter itself. It is default behavior of Spec integration with Commander.
+
+Problem with this approach is that presenter always bound to its own current state. It is fine for simple cases. But for example you are not able to activate our commands in context of contact which is not selected in the table. Following example demonstrates problem in live:
+
+You can notice that dropping contact into the book presenter always adds it to the end of list. Let's extend ==AddContactCommand== with ==beforeContact== variable before which we will add new contact:
+
+[[[
+CmdCommand subclass: #AddContactCommand
+	instanceVariableNames: 'contactBook beforeContact contact'
+	classVariableNames: ''
+	package: 'Commander-Examples'
+]]]
+
+And we should modify execution method to take into new logic. And we need extra method for ==ContactBook==:
+
+[[[
+AddContactCommand>>execute
+	beforeContact
+		ifNil: [ contactBook addContact: contact]
+		ifNotNil: [ contactBook addContact: contact before: beforeContact ]
+
+ContactBook>>addContact: newContact before: contactAfter
+	contents add: newContact before: contactAfter
+]]]
+
+So if ==beforeContext== is not specified the new contact will be adde to the end of list.
+
+We can support this logic in full execution scenario where command is activated from menu or by shortcut:
+
+[[[
+AddContactCommand>>prepareFullExecutionInContext: aToolContext
+	| nameAndPhone pair |
+	super prepareFullExecutionInContext: aToolContext.
+
+	contactBook := aToolContext selectedContactBook.
+	beforeContact := aToolContext selectedContact.
+
+	nameAndPhone := UIManager default
+		request: 'Enter new contact name and phone (split by comma)'
+		initialAnswer: 'name,phone'
+		title: 'Create new contact'.
+	nameAndPhone isEmptyOrNil ifTrue: [ ^ CmdCommandAborted signal ].
+	pair := (',' split: nameAndPhone).
+	contact := CmdContact named: pair first phone: pair last
+]]]
+
+New contact will be added before selected contact from context which is presenter in simple case.
+
+Now you can test new logic by creation new contacts from menu or by shortcuts.
+
+For drag and drop case we should modify ==prepareExecutionInDropContext:==:
+
+[[[
+AddContactCommand>>prepareExecutionInDropContext: aToolContext
+	super prepareExecutionInDropContext: aToolContext.
+
+	contactBook := aToolContext selectedContactBook.
+	beforeContact := aToolContext selectedContact
+]]]
+
+Now if you would play with drag and drop you will notice that it works not in the expected way: new contact is always added into the target book before selected item instead of item where drop is executed.
+
+And problem is that the selection of the drop target is the static state of the target book presenter. It is could not be different depending on the actual place of drop operation.
+So we need the real context which will incapsulate selected contact independently of presenter.
+
+Contexts are subclasses of ==CmdToolContext== and they should include all information to describe the state of underlying tool. In our case it will include ==selectedContact== variable:
+
+[[[
+CmdToolContext subclass: #CmdContactBookPresenterContext
+	instanceVariableNames: 'selectedContact'
+	classVariableNames: ''
+	package: 'Commander-Examples'
+]]]
+
+If we would like support multiple selection then we would need ==selectedContacts== collection. But it is out of this example.
+
+And to inject this context to our presenter we should override two methods:
+
+[[[
+
+]]]
 
 
+================todo=====================
 
+
+ And at the end Commander prepare commands in context of the element which performs drop e When user starts drag something from the widget Commander finds all commands
+
+Drag and drop command activation is different than others.
+To prepare command it needs two contexts. First context describes the place where drag was started. Second context describes drop target tool.
+So activator prepares command execution in both contexts. They bring different information.
+And together they are supposed to provide all required data for command execution without extra user requests.
+
+According to this logic commands should define following supporting methods when they want drag and drop:
+
+- ==prepareExecutionInDragContext: aToolContext==
+- ==prepareExecutionInDropContext: aToolContext==
+- ==canBeExecutedInDropContext: aToolContext==
+
+Also specific contexts can define own set of activation methods:
 
 
 !!! Commands, activations and contexts
