@@ -397,7 +397,7 @@ RenameContactCommand class>>canBeExecutedInContext: aToolContext
 	^aToolContext isContactSelected
 ]]]
 
-(As default implementation any command can be executed in any context. So this method returns true)
+(As default implementation any command can be executed in any context. So by default this message returns true)
 
 And presenter should implement ==isContactSelected==:
 [[[
@@ -417,21 +417,23 @@ There are other settings:
 
 !!!! Menu item order
 
-In our example 'Rename' item was placed at the end of menu because by default items are sorted in alphabet order.
+In our example 'Rename' item was placed at the end of menu because by default items are sorted in alphabetical order.
 To change the order the activation strategy should be created with extra parameter:
 
 [[[
-CmdChangePhoneCommand>>contextMenuActivation
+RenameContactCommand>>contextMenuActivation
 	<classAnnotation>
-    ^CmdContextMenuCommandActivation byRootGroupItemOrder: 1 for: CmdContactBookPresenter
+  ^CmdContextMenuCommandActivation byRootGroupItemOrder: 1 for: CmdContactBookPresenter
 ]]]
 
 The lesser order value puts item to the top of menu list.
 
++Context menu reordered>file://Figures/FamilyMenuRenameFirst.png+
+
 !!!! Menu groups
 
 Commander allows create hierarchical menu using reified menu groups.
-Imaging that you would like to put 'New phone' command under 'Phone operations' submenu.
+Imaging that you want put 'New phone' command under 'Phone operations' submenu.
 
 First you need new subclass of CmdMenuGroup:
 
@@ -442,7 +444,7 @@ CmdMenuGroup subclass: #PhoneMenuGroup
 	package: 'Commander-Examples'
 ]]]
 
-And then just create activation strategy with extra group class parameter:
+And then add this class as extra parameter to the menu activation strategy:
 
 [[[
 ChangePhoneCommand>>contextMenuActivation
@@ -450,13 +452,14 @@ ChangePhoneCommand>>contextMenuActivation
   ^CmdContextMenuCommandActivation byItemOf: PhoneMenuGroup for: CmdContactBookPresenter
 ]]]
 
-It will moves ChangePhoneCommand to extra submenu with name 'PhoneMenuGroup'.
-And you can specify better name as in case of commands:
+It will moves ChangePhoneCommand to extra submenu with name 'PhoneMenuGroup'. You can specify better name as in case of commands:
 
 [[[
 PhoneMenuGroup>>name
 	^'Phone operations'
 ]]]
+
++Submenu>file://Figures/FamilyMenuPhoneGroup.png+
 
 If you need deep menu structure just define class side method ==parent== in your very child group:
 
@@ -467,34 +470,41 @@ DeepChildrenMenuGroup class>>parentGroup
 
 !!!! Menu separators
 
-Commander models separators as inlined menu group.
-You only need to mark target group as inlined and all its items will be added to the parent with required separator lines:
+Commander uses separators to represent inlined menu groups.
+
+If group is marked as inlined then all items are added to the parent group with required separator lines. To inline group you need override method ==isInlined==:
 
 [[[
 PhoneMenuGroup>>isInlined
 	^true
 ]]]
 
++Inlined menu>file://Figures/FamilyMenuInlined.png+
+
 !!!! Menu icons
 
-To specify icon the command should implement the method ==setUpIconForMenuItem:==
+To specify icon the command should implement the instance side method ==setUpIconForMenuItem:==. For example we can add icon to the ==RemoveContactCommand==:
 
 [[[
 RemoveContactCommand>>setUpIconForMenuItem: aMenuItemMorph
 	self setUpIconNamed: #removeIcon forMenuItem: aMenuItemMorph
 ]]]
 
-It looks a bit complicated but idea is to be able create dynamic and complex icons based on command state. For this reason it is not enough to only return icon name from some simple icon method.
++Iconic menu item>file://Figures/FamilyMenuWithIcon.png+
+
+As you can see it is not primitive ==icon== method which returns the icon instance.
+
+The idea is to be able create dynamic and complex icons based on command state.
 
 !!!! Custom menu items
 
-When Commander builds context menu it asks command itself to build view for menu item (a morph).
+When Commander builds context menu it asks command itself to build view (a morph) for menu item.
 By default CmdCommand returns standard menu item morph but subclasses can redefine it to be represented specifically.
 
 For example we can represent item with different color:
 
 [[[
-CmdRenameContactCommand>>fillContextMenu: aMenu using: aCommandActivator
+RenameContactCommand>>fillContextMenu: aMenu using: aCommandActivator
 	| item |
 	item := aMenu
 		add: aCommandActivator menuItemName
@@ -504,8 +514,10 @@ CmdRenameContactCommand>>fillContextMenu: aMenu using: aCommandActivator
 	item color: Color red
 ]]]
 
++Custom menu item>file://Figures/FamilyMenuWithCustomItem.png+
+
 You can notice here that command can be represented by multiple menu items. ==fillContextMenu== method provides full control under menu.
-For example you can generate multiple command copies with some specific parameters. It leads to highly dynamic menus which could be needed for some special applications.
+For example you can generate multiple command copies with some specific parameters. It allows highly dynamic menus which can be needed for some special applications.
 
 Also same kind of flexibility is available for groups. Look at default implementation of menu group for example:
 
