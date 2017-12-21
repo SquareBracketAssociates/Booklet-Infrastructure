@@ -31,7 +31,7 @@ Contact>>printOn: aStream
 	aStream nextPut: $).
 ]]]
 
-2. Contact book with collection of contacts:
+2. Contact book which holds collection of contacts:
 
 [[[
 Object subclass: #ContactBook
@@ -64,7 +64,7 @@ RenameContactCommand>>execute
 	contact name: newName
 ]]]
 
-Also we need accessors and constructors for these classes. For example for the command it would be:
+We need accessors and constructors for all these classes. For example for the command it would be:
 
 [[[
 RenameContactCommand class>>contact: aContact to: newNameString
@@ -73,16 +73,17 @@ RenameContactCommand class>>contact: aContact to: newNameString
 			newName: newNameString
 ]]]
 
-Now in playground we are able rename contact using this command:
+And in playground we are able rename contact using this command:
 
 [[[
 contact := Contact new.
-command := RenameContactCommand contact: contact to: 'John Smith'.
+command := RenameContactCommand contact: contact newName: 'John Smith'.
 command execute.
 ]]]
 
 Before we continue we should write simple UI which will show contact book contents.
-To follow you should be fimilar with Spec UI framework.
+(You should be fimilar with Spec UI framework to follow this example).
+
 We need just one presenter which will show contact table:
 
 [[[
@@ -98,7 +99,7 @@ ContactBookPresenter>>initializeWidgets
 	table items: contactBook contents
 ]]]
 
-And let's make reusable book as class side variable:
+Also let's make reusable book as class side variable:
 
 [[[
 ContactBook>>family
@@ -120,7 +121,7 @@ ContactBookPresenter class>>familyExample
 
 We put it as example. So you can run it from the browser using suitable icon:
 
-+Family book window.>file://figures/Family.png+
++Family book window.>file://Figures/Family.png+
 
 !!! Activation strategy
 
@@ -640,6 +641,9 @@ AddContactCommand>>prepareFullExecutionInContext: aToolContext
 	super prepareFullExecutionInContext: aToolContext.
 
 	contactBook := aToolContext selectedContactBook.
+	aToolContext isContactSelected ifTrue: [
+		beforeContact := aToolContext selectedContact].
+
 	beforeContact := aToolContext selectedContact.
 
 	nameAndPhone := UIManager default
@@ -662,7 +666,8 @@ AddContactCommand>>prepareExecutionInDropContext: aToolContext
 	super prepareExecutionInDropContext: aToolContext.
 
 	contactBook := aToolContext selectedContactBook.
-	beforeContact := aToolContext selectedContact
+	aToolContext isContactSelected ifTrue: [
+		beforeContact := aToolContext selectedContact].
 ]]]
 
 Now if you would play with drag and drop you will notice that it works not in the expected way: new contact is always added into the target book before selected item instead of item where drop is executed.
@@ -673,20 +678,46 @@ So we need the real context which will incapsulate selected contact independentl
 Contexts are subclasses of ==CmdToolContext== and they should include all information to describe the state of underlying tool. In our case it will include ==selectedContact== variable:
 
 [[[
-CmdToolContext subclass: #CmdContactBookPresenterContext
-	instanceVariableNames: 'selectedContact'
+CmdToolContext subclass: #ContactBookPresenterContext
+	instanceVariableNames: 'selectedContacts'
 	classVariableNames: ''
 	package: 'Commander-Examples'
 ]]]
 
-If we would like support multiple selection then we would need ==selectedContacts== collection. But it is out of this example.
+For Spec support Commander passes multiple items to request context from presenter. So we should use contact collection instead of single item. And generally it is more common case. Selection can include multiple items.
 
-And to inject this context to our presenter we should override two methods:
+In addition context should support all methods which are required by commands:
 
 [[[
+ContactBookPresenterContext>>selectedContact
+	^selectedContacts last "last selected item"
 
+ContactBookPresenterContext>>isContactSelected
+		^selectedContacts notEmpty
+
+ContactBookPresenterContext>>selectedContactBook
+		^tool contactBook
+
+ContactBookPresenterContext>>isContactBookSelected
+		^true
 ]]]
 
+Notice that base class of context ==CmdToolContext== provides ==tool== variable which is presenter instance in our case.
+
+Also to implement ==selectedContactBook== we do not need to call ==selectedContactBook== from presenter. It was the message to represent presenter as own context. So ==selectedContactBook== can be removed from presenter together with ==isContactBookSelected== method because they are now defined by reified context class.
+==ContactBookPresenterContext== tightly bound to the ==ContactBookPresenter==. So it knows that contact book is mondatory property of presenter and it can call accessor directly.
+
+To inject new context to our presenter we should override two methods:
+
+[[[
+ContactBookPresenter>>createCommandContextForSelection: selectedContacts
+	^ContactBookPresenterContext for: self of: selectedContacts
+
+ContactBookPresenter>>createCommandContext
+	^self createCommandContextForSelection: table selectedItems
+]]]
+
+First method creates context instance with selected items. And last method provides default selection (from table) to the context.
 
 ================todo=====================
 
