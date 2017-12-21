@@ -766,7 +766,9 @@ This approach would be required if we would extend our presenter with extra comp
 
 In case when presenter provides single set of commands we can just mark the context as simple. It is preferred solution for simple presenters because in that case internal context implementation will be hidden from users. All commands will mention only presenter class in annotations.
 
-So in simple context the tool (presenter) is actual user of commands. And it should redefine the method ==representsSimpleAnnotationUser:== method by testing that the tool is a kind of given class. And in our example we follow this approach:
+So in simple context the tool (presenter) is actual user of commands. And it should redefine the method ==representsSimpleAnnotationUser:== by testing that the tool is a kind of given class.
+
+In our example we follow this approach:
 
 [[[
 ContactBookPresenterContext>>representsSimpleAnnotationUser: aToolClass
@@ -775,12 +777,12 @@ ContactBookPresenterContext>>representsSimpleAnnotationUser: aToolClass
 
 Now if you will try again drag and drop you will see that drop inserts contact after element where drop is executed.
 
-Now a bit of details about this logic:
+And a bit of details about this logic:
 ==representsSimpleAnnotationUser== method is part of ClassAnnotation library. When you create annotation using class as context the annotation will be visible only for instances of this class hierarchy. Annotation will use simple ==isKindOf:== check to detect that given user can find it. But user can redefine this logic using this method.
 
-In case of Commander the user of annotation is a tool context. And there is ==CmdSimpleToolContext== which is default for Spec presenters. It redefines this logic in the way that the tool becomes actual user of annotation. It simply checks that the tool is a kind of declared user class.
+In case of Commander the user of annotation is a tool context. But there is ==CmdSimpleToolContext== which is default for Spec presenters. It redefines this logic in the way that the tool becomes actual user of annotation. It simply checks that the tool is a kind of declared user class. ==CmdSimpleToolContext== redefine other logic of base ==CmdToolContext==. So it should not be used as superclass.
 
-And in same way any simple reified contexts should redefine this method which is what we did in this example.
+And simple reified contexts should redefine this method in same way. And it is what we did in this example.
 
 ================todo=====================
 
