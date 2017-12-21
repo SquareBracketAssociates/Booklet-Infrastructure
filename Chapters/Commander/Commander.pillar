@@ -154,6 +154,7 @@ RenameContactCommand class>>menuActivation
 Now if you will open window neither shortcuts or context menu will work. The problem is that Spec has no information about Commander. Spec only provides basic functionality to define menu and shortcuts on low level. So you should manually activate Commander in your Spec presenter.
 
 Try modify ==initializeWidgets== method to activate context menu:
+
 [[[
 ContactBookPresenter>>initializeWidgets
 	table := self newList.
@@ -203,11 +204,11 @@ ContactBookPresenter>>selectedContact
 	^table selectedItem
 ]]]
 
-Now if you will click on 'Rename' item you will be requested for new contact name. But after submit the view will be not updated. Reopen presenter window to see result.
+Now if you will click on 'Rename' item you will be requested for new contact name. But after submit the view will be not updated. Reopen presenter window to see the result.
 
-It is your responsibility to manage updates between application and model. You can use some event system which will automatically udpate view after modification of model.
+It is your responsibility to manage updates between application and model. You can use some event mechanizm which will automatically udpate view after modification of model.
 
-But Commander provides very simple mechanizm to apply result of command which can be also used to update the view.
+But Commander provides very simple way to apply result of command which can be also used to update the view.
 
 ==applyResultInContext:== is called when command is executed. You can implement it on your commands to produce desired effect in context of your application:
 
@@ -227,7 +228,7 @@ ContactBookPresenter>>updateView
 
 And finally context menu item is working fine: it asks new name and table updates after submit.
 
-Now we can enable shortcuts on presenter. Just implement method ==ensureKeyBindingsFor==:
+Now we can enable shortcuts on presenter. Just implement method ==ensureKeyBindingsFor:==:
 
 [[[
 ContactBookPresenter>>ensureKeyBindingsFor: aWidget
@@ -236,7 +237,7 @@ ContactBookPresenter>>ensureKeyBindingsFor: aWidget
 
 Then reopen window, select contact and press cmd+r (on Mac). You will get same UI dialog as in case of menu.
 
-At the end try create few other commands. With all required methods in presenter the creation of new commands are very straightforward process:
+At the end try create few other commands. With ready infrastructure in presenter the creation of new commands is very straightforward process:
 
 1. Command to modify contact phone number:
 
@@ -269,7 +270,7 @@ ChangePhoneCommand>>defaultMenuItemName
 	^'New phone'
 ]]]
 
-And activation methods:
+Activation methods:
 
 [[[
 ChangePhoneCommand class>>contextMenuActivation
@@ -307,7 +308,7 @@ RemoveContactCommand>>defaultMenuItemName
 	^'Remove'
 ]]]
 
-Here we extend our requirement to the context: to be able remove contact we also need a contact book instance where we should perform deletion.
+Here we extend our requirement to the context: to be able remove a contact we also need a contact book instance where we should perform deletion.
 
 And we implement new method ==selectedContactBook== in the presenter:
 
@@ -316,8 +317,8 @@ ContactBookPresenter>>selectedContactBook
 	^contactBook
 ]]]
 
-Notice that we could use accessor ==contactBook== from aToolContext. But it leads to bad reusability of command because the name ==contactBook== means single book instance while other applications can provide multiple of them in same way like our current presenter provides multiple contacts.
-So in sense of tool context it is better to call ==selectedContactBook== because it is better reflects abstract requirement of information.
+Notice that in ==prepare== method we could call accessor ==contactBook== from aToolContext. But it leads to bad reusability of command because the name ==contactBook== means single book instance while other applications can provide multiple of them in same way like our current presenter provides multiple contacts.
+So in sense of tool context it is better to call ==selectedContactBook== because it is better reflects abstract requirement of information: we expect that there will be selected book in context of command activation.
 
 Activation methods:
 
@@ -366,7 +367,7 @@ AddContactCommand>>defaultMenuItemName
 
 In preparation we request user for both name and phone number in simple comma separated form.
 
-And activation methods:
+Activation methods:
 
 [[[
 AddContactCommand class>>contextMenuActivation
@@ -378,7 +379,7 @@ AddContactCommand class>shortcutActivation
   ^CmdShortcutCommandActivation by: $n meta for: CmdContactBookPresenter
 ]]]
 
-+Family book menu>file://Figures/FamilyWithMenu.png+
++Family book menu>file://Figures/FamilyMenuDefault.png+
 
 It is up to you to maintain commands in good shape. For example commands here use same state ==contact== and duplicate method ==applyResultInContext:==.
 You can refactor it with your taste, extract common superclass and so on.
