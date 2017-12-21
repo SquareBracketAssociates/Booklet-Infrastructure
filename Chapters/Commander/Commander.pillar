@@ -760,26 +760,27 @@ So if we will do nothing our example will loose all menus and shortcuts. There i
 
 1. Modify all command activations to use context class ==ContactBookPresenterContext== instead of presenter class ==ContactBookPresenter==.
 
-This approach would be required if we would extend our presenter with extra component which can require separate set of commands. But in our example we do not need it.
+This approach would be required if we would extend our presenter with extra component which will provide separate set of commands. But in our example we do not need it.
 
 2. Adopt our context to be simple single context of presenter.
 
-In case if presenter provides single set of commands we can just mark its single context that it is simple context of tool. It is preferred solution for simple presenters becasue in that case internal context implementation will be hidden from users. All commands will mention only presenter class in annotations.
+In case when presenter provides single set of commands we can just mark the context as simple. It is preferred solution for simple presenters because in that case internal context implementation will be hidden from users. All commands will mention only presenter class in annotations.
 
-So simple context should implement ==implementsSimpleAnnotationContext:== method by testing that its tool is a kind of given class. And in our example we follow this approach:
+So in simple context the tool (presenter) is actual user of commands. And it should redefine the method ==representsSimpleAnnotationUser:== method by testing that the tool is a kind of given class. And in our example we follow this approach:
 
 [[[
-ContactBookPresenterContext>>implementsSimpleAnnotationContext: aToolClass
+ContactBookPresenterContext>>representsSimpleAnnotationUser: aToolClass
 	^tool isKindOf: aToolClass
 ]]]
 
-And now if you will play with drag and drop you will see that drop inserts contact after element where drop is executed.
+Now if you will try again drag and drop you will see that drop inserts contact after element where drop is executed.
 
-Notice that ==implementsSimpleAnnotationContext== method is part of ClassAnnotation library. When annotation context is defined by class it uses simple ==isKindOf:== check to detect that given annotation is visible in context of annotation user. But user can redefine this logic using this method.
+Now a bit of details about this logic:
+==representsSimpleAnnotationUser== method is part of ClassAnnotation library. When you create annotation using class as context the annotation will be visible only for instances of this class hierarchy. Annotation will use simple ==isKindOf:== check to detect that given user can find it. But user can redefine this logic using this method.
 
-In case of Commander the user of annotation is a tool context. And there is ==CmdSimpleToolContext== which is default for Spec presenters. It redefines this logic to check the tool class instead of own class.
+In case of Commander the user of annotation is a tool context. And there is ==CmdSimpleToolContext== which is default for Spec presenters. It redefines this logic in the way that the tool becomes actual user of annotation. It simply checks that the tool is a kind of declared user class.
 
-And any simple reified contexts should redefine this method in same way.  
+And in same way any simple reified contexts should redefine this method which is what we did in this example.
 
 ================todo=====================
 
