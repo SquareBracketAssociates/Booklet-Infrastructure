@@ -378,7 +378,7 @@ AddContactCommand class>shortcutActivation
   ^CmdShortcutCommandActivation by: $n meta for: CmdContactBookPresenter
 ]]]
 
-+Family book menu>file://figures/FamilyWithMenu.png+
++Family book menu>file://Figures/FamilyWithMenu.png+
 
 It is up to you to maintain commands in good shape. For example commands here use same state ==contact== and duplicate method ==applyResultInContext:==.
 You can refactor it with your taste, extract common superclass and so on.
