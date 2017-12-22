@@ -4,26 +4,27 @@ In this chapter you will learn about a new library to manage commands. The libra
 
 !!! Commands
 
-Commander models application actions as first class objects.
-
-Every action is implemented as separate command class (subclass of ==CmdCommand==) with ==execute== method and all state required for execution.
+Commander models application actions as first class objects following the Command design pattern.
+Every action is implemented as separate command class (subclass of ==CmdCommand==) with the ==execute== method and all state required for execution.
 
 !!! An example
 
 Let's look how we can apply commands to control simple contact book.
 The code of example is packaged inside Commander-Examples package. So you can load it and play.
 
-In the domain we need two classes:
+In our domain we need two classes one for the contact and one for the contact book.
 
-1. Contact with name and phone:
+!!!! 1. Contact with name and phone:
 
 [[[
 Object subclass: #Contact
 	instanceVariableNames: 'name phone'
 	classVariableNames: ''
 	package: 'Commander-Examples'
+]]]
 
-Contact>>printOn: aStream
+[[[
+Contact >> printOn: aStream
 	super printOn: aStream.
 
 	aStream nextPut: $(.
@@ -31,24 +32,30 @@ Contact>>printOn: aStream
 	aStream nextPut: $).
 ]]]
 
-2. Contact book which holds collection of contacts:
+!!!! 2. Contact book which holds collection of contacts:
 
 [[[
 Object subclass: #ContactBook
 	instanceVariableNames: 'contents'
 	classVariableNames: ''
 	package: 'Commander-Examples'
+]]]
 
-ContactBook>>addContact: aContact
+[[[
+ContactBook >> addContact: aContact
 	contents add: aContact
+]]]
 
-ContactBook>>add: contactName phone: phone
+[[[
+ContactBook >> add: contactName phone: phone
 	| contact |
 	contact := CmdContact named: contactName phone: phone.
 	self addContact: contact.
 	^contact
+]]]
 
-ContactBook>>includesContact: aContact
+[[[
+ContactBook >> includesContact: aContact
 	^ contents includes: aContact
 ]]]
 
@@ -59,7 +66,9 @@ CmdCommand subclass: #RenameContactCommand
 	instanceVariableNames: 'contact newName'
 	classVariableNames: ''
 	package: 'Commander-Examples'
+]]]
 
+[[[
 RenameContactCommand>>execute
 	contact name: newName
 ]]]
@@ -67,7 +76,7 @@ RenameContactCommand>>execute
 We need accessors and constructors for all these classes. For example for the command it would be:
 
 [[[
-RenameContactCommand class>>contact: aContact to: newNameString
+RenameContactCommand class >> contact: aContact to: newNameString
    ^self new
 	 		contact: aContact;
 			newName: newNameString
@@ -121,7 +130,7 @@ ContactBookPresenter class>>familyExample
 
 We put it as example. So you can run it from the browser using suitable icon:
 
-+Family book window.>file://Figures/Family.png+
+%+Family book window.>file://Figures/Family.png+
 
 !!! Activation strategy
 
@@ -239,7 +248,7 @@ Then reopen window, select contact and press cmd+r (on Mac). You will get same U
 
 At the end try create few other commands. With ready infrastructure in presenter the creation of new commands is very straightforward process:
 
-1. Command to modify contact phone number:
+!!!! 1. Command to modify contact phone number:
 
 [[[
 CmdCommand subclass: #ChangePhoneCommand
@@ -266,7 +275,7 @@ ChangePhoneCommand>>applyResultInContext: aToolContext
 
 	aToolContext updateView
 
-ChangePhoneCommand>>defaultMenuItemName
+ChangePhoneCommand >> defaultMenuItemName
 	^'New phone'
 ]]]
 
@@ -282,7 +291,7 @@ ChangePhoneCommand class>shortcutActivation
   ^CmdShortcutCommandActivation by: $p meta for: CmdContactBookPresenter
 ]]]
 
-2. Command to remove contact:
+!!!! 2. Command to remove contact:
 
 [[[
 CmdCommand subclass: #RemoveContactCommand
@@ -332,7 +341,7 @@ RemoveContactCommand class>shortcutActivation
   ^CmdShortcutCommandActivation by: $x meta for: CmdContactBookPresenter
 ]]]
 
-3. Command to add contact:
+!!!! 3. Command to add contact:
 
 [[[
 CmdCommand subclass: #AddContactCommand
