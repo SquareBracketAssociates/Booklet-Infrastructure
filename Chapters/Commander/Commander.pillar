@@ -413,6 +413,8 @@ AddContactCommand class >> shortcutActivation
 
 It is up to you to maintain commands in good shape. For example commands here use same state ==contact== and duplicate method ==applyResultInContext:==. You can refactor it with your taste, extract common superclass and so on.
 
+@@todo Stef here
+
 !!! Extra command conditions
 
 Now there will be error if you will try rename contact when no item is selected in table.
@@ -582,7 +584,7 @@ If Commander finds multiple commands suitable for the drop context it will show 
 Now we can annotate existing command ==AddContactCommand== with drag and drop activation:
 
 [[[
-AddContactCommand class>>dragAndDropActivation
+AddContactCommand class >> dragAndDropActivation
 	<classAnnotation>
 	^CmdDragAndDropCommandActivation for: ContactBookPresenter toDropIn: ContactBookPresenter
 ]]]
@@ -592,7 +594,7 @@ First parameter describes context where drag can be started. And last parameter 
 As in example with context menu and shortcuts we also need activate Commander based drag and drop in our presenter. It should be enabled in ==initializeWidgets== method:
 
 [[[
-ContactBookPresenter>>initializeWidgets
+ContactBookPresenter >> initializeWidgets
 	table := self newList.
 	table numberOfColumns: 2 withWidths: #(250 250).
 	table displayBlock: [ :contact | {contact name. contact phone} ].
@@ -605,7 +607,7 @@ ContactBookPresenter>>initializeWidgets
 And to prepare command instance in two steps we need implement to methods:
 
 [[[
-AddContactCommand>>prepareExecutionInDragContext: aToolContext
+AddContactCommand >> prepareExecutionInDragContext: aToolContext
 	super prepareExecutionInDragContext: aToolContext.
 
 	contact := aToolContext selectedContact
@@ -614,7 +616,7 @@ AddContactCommand>>prepareExecutionInDragContext: aToolContext
 ==prepareExecutionInDragContext== extracts information from the context of drag operation. In that case we decided that command can be only executed by drag of selected contact.
 
 [[[
-AddContactCommand>>prepareExecutionInDropContext: aToolContext
+AddContactCommand >> prepareExecutionInDropContext: aToolContext
 	super prepareExecutionInDropContext: aToolContext.
 
 	contactBook := aToolContext selectedContactBook
@@ -625,7 +627,7 @@ And in second method ==prepareExecutionInDropContext== we extract the rest infor
 Now drag and drop should work. To play with it let's create another book of coworkers on the class side of ==ContactBook==:
 
 [[[
-ContactBook class>>coworkers
+ContactBook class >> coworkers
 	^coworkers ifNil: [
 		coworkers := self new
 			add: 'Stef' phone: '112 378';
