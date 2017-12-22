@@ -14,7 +14,7 @@ The code of example is packaged inside Commander-Examples package. So you can lo
 
 In our domain we need two classes one for the contact and one for the contact book.
 
-!!!! 1. Contact with name and phone:
+!!!! 1. Contact with name and phone
 
 [[[
 Object subclass: #Contact
@@ -32,7 +32,7 @@ Contact >> printOn: aStream
 	aStream nextPut: $).
 ]]]
 
-!!!! 2. Contact book which holds collection of contacts:
+!!!! 2. Contact book: a collection of contacts
 
 [[[
 Object subclass: #ContactBook
@@ -59,7 +59,8 @@ ContactBook >> includesContact: aContact
 	^ contents includes: aContact
 ]]]
 
-Now we can create ==RenameContactCommand== to rename given contact:
+!!!! 3. A first command
+Now we can create ==RenameContactCommand== to rename given contact
 
 [[[
 CmdCommand subclass: #RenameContactCommand
@@ -69,7 +70,7 @@ CmdCommand subclass: #RenameContactCommand
 ]]]
 
 [[[
-RenameContactCommand>>execute
+RenameContactCommand >> execute
 	contact name: newName
 ]]]
 
@@ -77,53 +78,58 @@ We need accessors and constructors for all these classes. For example for the co
 
 [[[
 RenameContactCommand class >> contact: aContact to: newNameString
-   ^self new
-	 		contact: aContact;
+	^self new
+			contact: aContact;
 			newName: newNameString
 ]]]
 
 And in playground we are able rename contact using this command:
 
 [[[
+| contact command |
 contact := Contact new.
 command := RenameContactCommand contact: contact newName: 'John Smith'.
 command execute.
 ]]]
 
-Before we continue we should write simple UI which will show contact book contents.
-(You should be fimilar with Spec UI framework to follow this example).
+!!! Adding a simple UI
 
-We need just one presenter which will show contact table:
+Before we continue we should write simple UI which will show contact book contents.
+You should be fimilar with Spec UI framework to follow this example.
+
+We need just one presenter which will show contact table
 
 [[[
 ComposablePresenter subclass: #ContactBookPresenter
 	instanceVariableNames: 'table contactBook'
 	classVariableNames: ''
 	package: 'Commander-Examples'
+]]]
 
-ContactBookPresenter>>initializeWidgets
+[[[
+ContactBookPresenter >> initializeWidgets
 	table := self newList.
 	table numberOfColumns: 2 withWidths: #(250 250).
 	table displayBlock: [ :contact | {contact name. contact phone} ].
 	table items: contactBook contents
 ]]]
 
-Also let's make reusable book as class side variable:
+Also let's define a reusable book as class side variable
 
 [[[
-ContactBook>>family
+ContactBook >> family
 	^family ifNil: [
 		family := self new
 			add: 'John' phone: '342 345';
 			add: 'Bill' phone: '123 678';
 			add: 'Marry' phone: '789 567';
-			yourself]
+			yourself ]
 ]]]
 
 Now we are able show family phone book with Spec UI:
 
 [[[
-ContactBookPresenter class>>familyExample
+ContactBookPresenter class >> familyExample
 	<example>
 	^ (self on: ContactBook family) openWithSpec
 ]]]
@@ -131,7 +137,7 @@ ContactBookPresenter class>>familyExample
 We put it as example. So you can run it from the browser using suitable icon:
 
 %+Family book window.>file://Figures/Family.png+
-
+%+Family book window.>file://Figures/Family.png|label=Family+
 !!! Activation strategy
 
 Commands are reusable objects and applications provide various ways to access them: shortcuts, context menu, buttons, etc..
@@ -388,7 +394,7 @@ AddContactCommand class>shortcutActivation
   ^CmdShortcutCommandActivation by: $n meta for: CmdContactBookPresenter
 ]]]
 
-+Family book menu>file://Figures/FamilyMenuDefault.png+
+%+Family book menu>file://figures/FamilyMenuDefault.png+
 
 It is up to you to maintain commands in good shape. For example commands here use same state ==contact== and duplicate method ==applyResultInContext:==.
 You can refactor it with your taste, extract common superclass and so on.
@@ -430,14 +436,14 @@ In our example 'Rename' item was placed at the end of menu because by default it
 To change the order the activation strategy should be created with extra parameter:
 
 [[[
-RenameContactCommand>>contextMenuActivation
+RenameContactCommand >> contextMenuActivation
 	<classAnnotation>
-  ^CmdContextMenuCommandActivation byRootGroupItemOrder: 1 for: CmdContactBookPresenter
+	^CmdContextMenuCommandActivation byRootGroupItemOrder: 1 for: CmdContactBookPresenter
 ]]]
 
 The lesser order value puts item to the top of menu list.
 
-+Context menu reordered>file://Figures/FamilyMenuRenameFirst.png+
+%+Context menu reordered>file://Figures/FamilyMenuRenameFirst.png+
 
 !!!! Menu groups
 
@@ -456,9 +462,9 @@ CmdMenuGroup subclass: #PhoneMenuGroup
 And then add this class as extra parameter to the menu activation strategy:
 
 [[[
-ChangePhoneCommand>>contextMenuActivation
+ChangePhoneCommand >> contextMenuActivation
 	<classAnnotation>
-  ^CmdContextMenuCommandActivation byItemOf: PhoneMenuGroup for: CmdContactBookPresenter
+	^CmdContextMenuCommandActivation byItemOf: PhoneMenuGroup for: CmdContactBookPresenter
 ]]]
 
 It will moves ChangePhoneCommand to extra submenu with name 'PhoneMenuGroup'. You can specify better name as in case of commands:
@@ -468,7 +474,7 @@ PhoneMenuGroup>>name
 	^'Phone operations'
 ]]]
 
-+Submenu>file://Figures/FamilyMenuPhoneGroup.png+
+%+Submenu>file://Figures/FamilyMenuPhoneGroup.png+
 
 If you need deep menu structure just define class side method ==parent== in your very child group:
 
@@ -488,7 +494,7 @@ PhoneMenuGroup>>isInlined
 	^true
 ]]]
 
-+Inlined menu>file://Figures/FamilyMenuInlined.png+
+%+Inlined menu>file://Figures/FamilyMenuInlined.png+
 
 !!!! Menu icons
 
@@ -499,7 +505,7 @@ RemoveContactCommand>>setUpIconForMenuItem: aMenuItemMorph
 	self setUpIconNamed: #removeIcon forMenuItem: aMenuItemMorph
 ]]]
 
-+Iconic menu item>file://Figures/FamilyMenuWithIcon.png+
+%+Iconic menu item>file://Figures/FamilyMenuWithIcon.png+
 
 As you can see it is not primitive ==icon== method which returns the icon instance.
 
@@ -523,7 +529,7 @@ RenameContactCommand>>fillContextMenu: aMenu using: aCommandActivator
 	item color: Color red
 ]]]
 
-+Custom menu item>file://Figures/FamilyMenuWithCustomItem.png+
+%+Custom menu item>file://Figures/FamilyMenuWithCustomItem.png+
 
 You can notice here that command can be represented by multiple menu items. ==fillContextMenu== method provides full control under menu.
 For example you can generate multiple command copies with some specific parameters. It allows highly dynamic menus which can be needed for some special applications.
