@@ -929,9 +929,9 @@ CmdShortcutCommandActivation
 There are a lot of different types of menu: context menu, toolbar, morphic halo menu, etc.
 All of them are very similar: they show set of items to the user and when user selects one the action associated with item is evaluated. The main difference between them is the way how they are represented to user and where they are shown in application.
 
-The commander library allows the building of different kind of menus based on commands and first class groups. Concrete type of menu is represented by concrete type of activation strategy, subclass of ==CmdMenuCommandActivationStrategy==. The simplest example is ==CmdContextMenuCommandActivation== which we use to define context menu in our presenter example.
+The commander library allows the building of different kind of menus based on commands and first class groups. Concrete type of menu is represented by concrete type of activation strategy, subclass of ==CmdMenuCommandActivationStrategy==. The simplest example is ==CmdContextMenuCommandActivation== which we used to define context menu in our presenter example. Now it is only available in Commander. For other examples look at Calypso browser.
 
-So activations annotate commands to be part of menu:
+So users annotate commands with menu activations and Commander build menus using them:
 
 [[[
 YourCommand >> yourAppMenuActivation
@@ -964,7 +964,7 @@ menu buildInContext: context
 
 If your application provides multiple context you can call this method for all of them. In that case menu will include items from all widgets which provide these context.
 
-For our example you can inspect menu instance after ==build== method. You should see ==rootGroup== variable where you can reach menu items and underlying commands.
+For our example you can inspect menu instance after ==build== method. In inspector you will see ==rootGroup== variable where you can reach menu items and underlying commands.
 
 When menu instance is ready you can ask it to create concrete menu object like Morphic context menu:
 
@@ -972,25 +972,12 @@ When menu instance is ready you can ask it to create concrete menu object like M
 (menu buildContextMenuFor: World) openInWorld.
 ]]]
 
-And this is the way how implement new kind of menus. Simple create new subclass of ==CmdMenuCommandActivationStrategy== and extend ==CmdMenu== with new building logic to build required menu object. You can extend ==CmdCommand== to represent them specifically for your type of menu. All in same way how standard context menu is implemented. It is in separate package ==Commander-Activators-ContextMenu==.
+It is the way how implement new kind of menus. First, create new subclass of ==CmdMenuCommandActivationStrategy== and then extend ==CmdMenu== with new logic to build required menu object. You can extend ==CmdCommand== to represent item specifically for your type of menu.
 
-
-=================todo========================
-
-!!! Context menu command activation
-
-To add commands into context menu use ==CmdContextMenuCommandActivator== (more details at *@abstractMenuActivation*). For example:
+Look for details at package ==Commander-Activators-ContextMenu== which implements classic context menu based on commands. For example ==CmdContextMenuCommandActivation== implements helper method to create context menu for single application context. So previous example with building menu can be simplified:
 
 [[[
-RenamePackageCommand class >> packageBrowserMenuActivator
-  <commandActivator>
-  ^CmdContextMenuCommandActivator byRootGroupItemFor: PackageBrowserContext
-]]]
-
-To build context menu morph use following expression:
-
-[[[
-menu := CmdContextMenuCommandActivator buildMenuFor: anAppMorph inContext: aToolContext
+(CmdContextMenuCommandActivation buildMenuFor: World inContext: context) openInWorld
 ]]]
 
 Context menu extends command with menu building method:
@@ -1004,23 +991,37 @@ It creates menu item morph and allows subclasses to define default label and ico
 - ==defaultMenuItemName==
 - ==setUpIconForMenuItem: aMenuItemMorph==
 
-Subclasses can override building method ==fillContextMenu:using:== to represent themselves differently. For example they can create menu item with check box.
+Subclasses can override building method ==fillContextMenu:using:== to represent items differently. For example they can create menu item with check box or decorate them with special colors.
 
-!!! Shortcut command activation
+!!! Shortcut activation
 
-To mark commands with shortcuts use CmdShortcutCommandActivator. For example:
+As you saw in example section ==CmdShortcutCommandActivation== is used to annotated commands with shortcut:
 
 [[[
-RenamePackageCommand class >> packageBrowserShortcutActivator
-  <commandActivator>
-  ^CmdShortcutCommandActivator by: $r meta for: PackageBrowserContext
+RenameContactCommand class >> shortcutActivation
+	<classAnnotation>
+	^ CmdShortcutCommandActivation by: $r meta for: ContactBookPresenter
 ]]]
 
-There are extra instance creation methods for standard shortcuts:
-- ==renamingFor: aToolContext==
-- ==removalFor: aToolContext==
+There are extra helper methods for standard shortcuts:
+- ==renamingFor:==
+- ==removalFor:==
 
-To support shortcuts based on commands application should define specific kmDispatcher for target morphs:
+So we can rewrite activation using:
+
+[[[
+RenameContactCommand class >> shortcutActivation
+	<classAnnotation>
+	^ CmdShortcutCommandActivation renamingFor: ContactBookPresenter
+]]]
+
+Notice that class annotations are cached and updated only when declaration method is changed. It means that your should manually update cache when you modify helper methods like ==renameingFor:==:
+
+[[[
+ClassAnnotation resetAll
+]]]
+
+On the low level of Morphic integration the application should define specific kmDispatcher for target morphs:
 
 [[[
 YourAppMorph >> kmDispatcher
@@ -1034,51 +1035,15 @@ YourAppMorph >> createCommandContext
   ^YourAppContext for: self
 ]]]
 
-!!! Drag and drop command activation
-
-Drag and drop command activation is different than others.
-To prepare command it needs two contexts. First context describes the place where drag was started. Second context describes drop target tool.
-So activator prepares command execution in both contexts. They bring different information.
-And together they are supposed to provide all required data for command execution without extra user requests.
-
-According to this logic commands should define following supporting methods when they want drag and drop:
-
-- ==prepareExecutionInDragContext: aToolContext==
-- ==prepareExecutionInDropContext: aToolContext==
-- ==canBeExecutedInDropContext: aToolContext==
-
-Also specific contexts can define own set of activation methods:
+In example we were using high level Spec integration where we just enable Commander in target presenter:
 
 [[[
-SpecialContextA >> allowsDropExecutionOf: aCommand
-  ^aCommand canBeExecutedInSpecialDropContextA: self
-
-SpecialContextA >> prepareDragActivationOf: aCommand
-	aCommand prepareExecutionInSpecialDragContextA: self
-
-SpecialContextA >> prepareDropExecutionOf: aCommand
-	aCommand prepareExecutionInSpecialDropContextA: self
+ContactBookPresenter >> ensureKeyBindingsFor: aWidget
+	self enableCommanderShortcutsIn: aWidget
 ]]]
 
+So users do not need to think how morphs are connected in case of Spec.
 
-To activate commands with drag and drop use ==CmdDragAndDropCommandActivator==. For example:
-
-[[[
-MoveMethodToClassCommand class >> methodBrowserDragAndDropActivator
-  <commandActivator>
-  ^CmdDragAndDropCommandActivator for: MethodBrowserContext toDropIn: ClassBrowserContext
-]]]
-
-And supporting methods would be:
-
-[[[
-MoveMethodToClassCommand >> prepareExecutionInDragContext: aToolContext
-  super prepareExecutionInDragContext: aToolContext.
-  methods := aToolContext selectedMethods
-
-MoveMethodToClassCommand >> prepareExecutionInDropContext: aToolContext
-    super prepareExecutionInDropContext: aToolContext.
-    targetClass := aToolContext selectedClass
-]]]
+Other libraries/frameworks can privide similar integration to simplify Commander usage.
 
 !!! Conclusion
