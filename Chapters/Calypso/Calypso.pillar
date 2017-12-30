@@ -1,41 +1,41 @@
-!!Architecture of new system browser
+!!Architecture of the new system browser
 
 
-Calypso is a new system browser and tool suite. It is the basis for TelePharo the remote Pharo IDE.
+Calypso is a new system browser and tool suite. It is the basis for TelePharo, the remote Pharo IDE.
 It uses the Commander framework to reify commands. 
 
 Calypso supports the following features:
 - new navigation model
-- tabs toolbar instead of single source code panel
--- separate tools in tabs to create/edit methods/classes
-- explicit commands instead of duplicated menu and shortcuts
+- tabbed toolbar instead of a single source code panel
+-- separate tools in their own tabs to create/edit methods/classes
+- explicit commands instead of duplicated menus and shortcuts
 - extendible by plugins
-- suitable for remote scenario
+- suitable for remote scenarios
 - among the new features:
--- method group view instead of protocols view
+-- method groups instead of protocols
 ---"dynamic protocols"
 ---based on method tags as symbols
 ---supporting multiple tags per method
----not required star convention for class extension
+---odes not require the star convention (hack) for class extension
 --package view is based on class groups
 ---"dynamic protocols" for classes
 ---based on class tags as symbols
----support multiple tags per class
+---supports multiple tags per class
 --visibility option for inherited methods
 --methods inherited from traits are not shown by default
---variable view as special mode for method group view.
+--variable view as a special mode for the method group view
 
 Calypso will be part of the new Pharo 70. In this chapter we present the architecture and the key abstractions
 supporting the extensible structure of Calypso. 
 
-Calypso manipulates navigation environments which can be scoped and queried. Queries returns cursor objects which represents stream of objects.  
+Calypso manipulates navigation environments which can be scoped and queried. Queries return cursor objects which represent a stream of objects.  
 
 
 !!! Calypso navigation model
 
 
 !!!! System and navigation environments
-In Calypso, users query environments to get specific set of objects such as classes, methods....
+In Calypso, users query environments to get a specific set of objects such as classes, methods…
 
 First you need to get a ""navigation"" environment instance. There is a default one for the current image:
 [[[
@@ -43,7 +43,7 @@ First you need to get a ""navigation"" environment instance. There is a default 
 env := ClySystemNavigationEnvironment currentImage
 ]]]
 
-It is navigation environment which is created over some ""system environment"". In this case it is current image:
+It is a navigation environment which is created over some ""system environment"". In this case, it is the current image:
 
 [[[
 ClySystemEnvironment currentImage
@@ -51,19 +51,19 @@ ClySystemEnvironment currentImage
 
 A system environment models the image. It includes a package manager, a namespace (globals) and a system announcer. 
 
-A navigation environment provides an interface to query information from it. It organizes caches for all queries. When you browse senders of message ==do:==, the same result will be returned the second time you browse the same senders. Caches optimize performance and memory usage during navigation.
+A navigation environment provides an interface to query information from it. It organizes caches for all queries. When you browse senders of the message ==do:==, the same result will be returned the second time you browse the same senders. Caches optimize performance and memory usage during navigation.
 
-You can use your own navigation instance instead of global one. The current one is equivalent to the expression below: 
+You can use your own navigation instance instead of the global one. The one above is equivalent to the following expression: 
 [[[
 | env |
 env := ClySystemNavigationEnvironment over: ClySystemEnvironment currentImage
 ]]]
 
-External libraries can provide their own system environment and still Calypso will be able browse it. For example new version of Ring allows one to browse on disk code repositories with all Calypso features.
+External libraries can provide their own system environment and Calypso will still be able to browse it. For example, a new version of Ring allows one to browse on-disk code repositories with all Calypso features.
 
 !!!! Scoping environments
 
-For next steps you need a scope where you will look at environment objects.
+Next, you will need a scope to filter your environment object.
 
 You can define a scope on the environment for the full system:
 [[[
@@ -89,10 +89,10 @@ Or you can create a scope based on some concrete objects (such as classes, packa
 	classScope allClasses
 ]]]
 
-@@todo why this is not working. 
+@@todo why is this not working? 
 
-!!! Queries and their results: cursors
-Once you get a scope you can execute queries:
+!!! Queries and their results: Cursors
+Once you have a scope, you can execute queries:
 
 [[[
 | env packageScope classScope |
@@ -101,54 +101,59 @@ packageScope := env selectScope: ClyPackageScope of: {Point package}.
 classScope := env selectScope: ClyClassScope of: {Point. Collection}.
 
 packageScope query: ClySortedClasses
-"returns all the classes in the package but sorted"
+"returns all the classes in the package sorted"
 
 classScope query: ClySortedMethods
 "returns all the methods of the class sorted"
 
 packageScope query: (ClyMessageSenders of: #(do: x))
-"returns all the senders of one of the message do: or x"
+"returns all the senders of both messages (do: and x)"
 
 classScope query: (ClyMessageImplementors of: #(select: y:))
-"returns all the class implementing any of select: or y:"
+"returns all the classes implementing any of select: or y:"
 ]]]
 
 
 
-LocalClassScope you will see only things which are defined in class itself.
-There are also ClassHierarchyScope subclasses. They show you all things which are visible from related classes depending on what type of hierarchy they represent (there are ClySubclassScope, ClyInheritedTraitScope, etc).
+With LocalClassScope, you will see only things which are defined in a class itself.
+There are also ClassHierarchyScope subclasses. They show you all the things which are visible from related classes depending on what type of hierarchy they represent (there are ClySubclassScope, ClyInheritedTraitScope, etc).
 
 
 
-Any query returns instance of cursor which provides stream access to result as we will shown below.
+Any query returns an instance of cursor, which provides stream access to the result as we will see below.
 STEF HERE
 
 
-Result is represented by requested ==ClyEnvironmentContent== subclass. 
+Result is represented by the requested ==ClyEnvironmentContent== subclass. 
 
 STEF: is a cursor an instance of ClyEnvironmentContent? No apparently so what is the relationships?
 
 
-In first example it is instance of ==ClySortedClasses== which is sent as argument. Query method accepts query instance (subclasses of ClyEnvironmentQuery) or compatible object which implements ==asEnvironmentQuery== message. And class of result itself plays role of most trivial query ==ClyEnvironmentSimpleQuery==. Simple query is responsible to return all objects accessible from given scope in requested form. For example you can query all classes in hierarchical form:
+In the first example, an instance of ==ClySortedClasses== is sent as the argument. The query method accepts a query instance (subclasses of ClyEnvironmentQuery) or compatible object which responds to the ==asEnvironmentQuery== message. 
+
+The class of the result itself plays the role of the most trivial query: ==ClyEnvironmentSimpleQuery==. 
+SEAN: The sentence above is impossible for me to understand.
+
+Simple query is responsible to return all objects accessible from a given scope in the requested form.  For example, you can query all classes in a hierarchical form:
 
 [[[
 packageScope query: ClyHierarchicallySortedClasses
 ]]]
 
-Any query is created with requested content or defines default one.  In example senders and implementors use sorted methods by default. But they can use different:
+Any query is either created with its requested content or defines a default one.  For example, senders and implementors use sorted methods by default. But they can use others:
 
 [[[
 classScope query: (ClyMessageSenders of: #(do:) as: ClyHierarchicallySortedMethods)
 ]]]
 
 !!! Cursor objects
-As was mentioned above, the actual result of ==query:== is cursor object, the instance of ==ClyEnvironmentCursor==:
+As was mentioned above, the actual result of ==query:== is a cursor object, an instance of ==ClyEnvironmentCursor==:
 
 [[[
 cursor := classScope query: ClySortedMethods
 ]]]
 
-Cursor provides stream access to requested content items:
+Cursor provides stream access to the requested content items:
 [[[
 cursor currentItem.
 cursor nextItem.
@@ -156,25 +161,25 @@ cursor moveTo: itemPosition.
 cursor retrieveAll
 ]]]
 
-Returned items are not raw objects like methods or classes. Instead they are instances of ClyEnvironmentItem which wraps actual object. Items extend objects with arbitrary set of properties. For example if class has abstract method it can be marked with "abstract property". If method is overridden in subclasses it can be marked by "overridden property". Then tools use these properties to provide specific representation for items. For example browser can show abstract classes with italic font and it can show special icon nearly overridden method.
+Returned items are not raw objects like methods or classes. Instead they are instances of ClyEnvironmentItem which wraps the actual objects. Items extend objects with an arbitrary set of properties. For example, if a class has an abstract method it can be marked with "abstract property". If a method is overridden in subclasses it can be marked by "overridden property". Then tools use these properties to provide customized representations for these items. For example, the browser can show abstract classes with an italic font and it can show a special icon for overridden method(s).
 
 
-!!! Cachine computation
+!!! Caching computation
 
-Computation of properties is slow. Imaging that you look at all classes in system and for each class you want abstract property. It will require scanning almost all methods in system.
+Computation of properties is slow. Imaging that you look at all the classes in the system and for each class you want an abstract property. It will require scanning almost all methods in the system.
 
 Calypso solves this problem in two ways:
 
-- All queries are cached. Computation will be performed only once
+- All queries are cached. Computation will be performed only once.
 
-- Properties are computed lazily when objects are really used.  For example they computed for objects which are shown to user, for only visible part of them.
+- Properties are computed lazily when objects are really used.  For example, they are computed for only the subset of objects which is actually visible.
 
-Lazy computation is hidden from users by cursor instance. Cursor asks observed environment content to resolve small part of items according to current position. Then cursor uses resolved part as items cache. And new portion of items are resolved by demand.
+Lazy computation is hidden from users by the cursor instance. Cursor asks the observed environment content to resolve a small part of items according to the current position. Then the cursor uses the resolved part as an items cache. And new portions of the items are resolved on demand.
 
-This logic provides important optimization for remote scenario where observed content is remote object. In this case only used part of items is transferred over network. And when next part is needed it is loaded to client. It makes remote browser very fast because only visible part of packages, classes and methods are sent over network and all required information is available in few requests.
+This logic provides an important optimization for the remote scenario where the observed content is a remote object. In this case, only the used subset of items is transferred over the network. And when the next subset is actually needed, it is loaded to the client. This makes the remote browser very fast because only the visible subset of packages, classes and methods are sent over the network and all required information is available in a few requests.
 
 
-Now let's play with example cursor. It can be opened in table morph:
+Now let's play with an example cursor. It can be opened in a table morph:
 [[[
 cursor := packageScope query: ClySortedClasses.
 dataSource := ClyCollapsedDataSource on: cursor.
@@ -187,9 +192,9 @@ table
 
 imageHere
 
-Cursor provides query API to evaluate new queries with modified parameters.
+Cursor provides a query API to evaluate new queries with modified parameters.
 
-For example you can ask different kind of result for original query:
+For example you can ask a different kind of result than the original query:
 
 [[[
 cursor := cursor query: ClyHierarchicallySortedClasses
@@ -197,7 +202,7 @@ cursor := cursor query: ClyHierarchicallySortedClasses
 
 imageHere
 
-Or you can evaluate new query with extra package:
+Or you can evaluate a new query with an extra package:
 
 [[[
 cursor := cursor queryContentInScopeWith: #'AST-Core' asPackage
@@ -205,33 +210,33 @@ cursor := cursor queryContentInScopeWith: #'AST-Core' asPackage
 
 imageHere
 
-Or you can evaluate new query without existing package:
+Or you can evaluate a new query without an existing package:
 [[[
 cursor := cursor queryContentInScopeWithout: #Kernel asPackage
 ]]]
 
 imageHere
 
-With cursor you can navigate to the children scope of particular items. For example you can query methods of selected classes:
+With cursor you can filter to the child scope of particular items. For example you can query methods of selected classes:
 [[[
 cursor := cursor query: ClySortedMethods from: {Point. Array}.
 ]]]
 
 imageHere
 
-You can also evaluate original query in different scope. It allows fetch class side methods of selected classes:
+You can also evaluate the original query in a different scope. It allows you to fetch class side methods of selected classes:
 [[[
 cursor := cursor queryContentInNewScope: ClyClassSideScope
 ]]]
 
 imageHere
 
-All these queries never modify cursor state. They always return new cursor instance which points to new result.
+All these queries never modify the cursor state. They always return a new cursor instance which points to the new result.
 
 
 !!! Tree structure 
 
-On top of this navigation model Calypso implements tree structure. For example you can look at classes and methods in same table morph:
+On top of this navigation model, Calypso implements a tree structure. For example, you can look at classes and methods in the same table morph:
 
 [[[
 cursor := packageScope query: ClySortedClasses.
@@ -247,7 +252,7 @@ table
 imageHere
 
 
-Tree structure can include many levels. For example packages -> class groups -> classes:
+Tree structure can include many levels. For example, packages -> class groups -> classes:
 [[[
 cursor := env systemScope query: ClySortedPackages.
 dataSource := ClyCollapsedDataSource on: cursor.
@@ -276,7 +281,7 @@ table
 imageHere
 
 
-At the end let's implement new environment content ==RandomOrderedMethods==:
+Finally, let's implement a new environment content ==RandomOrderedMethods==:
 [[[
 ClyMethodsContent subclass: #ClyRandomOrderedMethods
     instanceVariableNames: ''
@@ -284,11 +289,11 @@ ClyMethodsContent subclass: #ClyRandomOrderedMethods
     package: 'Calypso-Example'
 ]]]
 
-Each kind of environment content implements set of the building methods depending on what scope it supports. For example ClySortedMethods supports extracting methods from classes and method groups. ClySortedClasses supports extracting classes from packages and class groups.
+Each kind of environment content implements a set of the building methods depending on what scope it supports. For example, ClySortedMethods supports extracting methods from classes and method groups. ClySortedClasses supports extracting classes from packages and class groups.
 
-When simple query is evaluated by given scope it asks requested content to be built from concrete objects. For package scope it will ask content for #buildFromPackages:. For class scope it will ask content for #buildFromClasses:.
+When simple query is evaluated by a given scope, it asks for the requested content to be built from concrete objects. For package scope, it will ask the content to #buildFromPackages:. For class scope, it will ask the content to #buildFromClasses:.
 
-For simplicity ClyRandomOrderedMethods will support only class scope:
+For simplicity, ClyRandomOrderedMethods will only support class scope:
 [[[
 buildFromClasses: classes
     items := OrderedCollection new.
@@ -298,7 +303,7 @@ buildFromClasses: classes
     items shuffle
 ]]]
 
-Now look at methods in new form:
+Now look at the methods in a new form:
 [[[
 cursor := env systemScope query: ClySortedPackages.
 dataSource := ClyCollapsedDataSource on: cursor.
@@ -313,23 +318,23 @@ table
 imageHere
 
 
-"Building" methods are required to be able evaluate simple queries with new implemented form. More advanced queries could require another code. Generally queries implement one method:
+"Building" methods are required to be able to evaluate simple queries in a new implemented form. More advanced queries might require different code. Generally queries implement one method:
 -fetchContent: anEnvironmentContent from: anEnvironmentScope
-where they dispatch processing to scope and environment content depending on their logic. For example to be able to use new random order for senders or implementors the method #buildFromMethods: should be implemented by content:
+where they dispatch processing to the scope and environment content depending on their logic. For example, to be able to use a new random order for senders or implementors, the method #buildFromMethods: should be implemented by the content:
 [[[
 buildFromMethods: methods
     items := methods shuffled collect: [ :each |
   ClyEnvironmentItem named: each selector with: each]
 ]]]
 
-If you open senders browser:
+If you open a senders browser:
 [[[
 browser := ClyMethodBrowser browseSendersOf: #do:
 ]]]
 
 imageHere
 
-you can switch it to new order:
+you can switch it to a new order:
 [[[
 browser switchToResultContent: ClyRandomOrderedMethods
 ]]]
@@ -337,5 +342,5 @@ browser switchToResultContent: ClyRandomOrderedMethods
 imageHere
 
 
-For more details look at code and read class comments.
+For more details, look at code and read the class comments.
 
