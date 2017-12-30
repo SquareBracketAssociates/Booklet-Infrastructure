@@ -114,10 +114,10 @@ ContactBookPresenter >> initializeWidgets
 	table items: contactBook contents
 ]]]
 
-Also, let's define a reusable book as a class side variable. 
+Also, let's define a reusable book as a class side variable.
 
 [[[
-ContactBook >> family
+ContactBook class >> family
 	^family ifNil: [
 		family := self new
 			add: 'John' phone: '342 345';
@@ -200,8 +200,8 @@ Now, if you click on the 'Rename' menu item, you will get an exception. From the
 Commander provides a method where a command should retrieve the required state from the given context instance:
 
 [[[
-RenameContactCommand >> prepareExecutionInContext: aToolContext
-	super prepareExecutionInContext: aToolContext.
+RenameContactCommand >> prepareFullExecutionInContext: aToolContext
+	super prepareFullExecutionInContext: aToolContext.
 
 	contact := aToolContext selectedContact.
 
@@ -217,7 +217,7 @@ By default (with the help of Spec integration) Commander will pass a presenter i
 For now, you only need to know that a context represents application state and that in the ==prepare==… method we define the information required to be able reuse commands in various applications.
 
 In our example, we expect to receive ==selectedContact== from the context and we request a ==newName== directly from the user.
-Note that Commander provides hook to customize preparation for different application contexts. By default it is ==prepareExecutionInContext:== but advanced scenarios may require a different approach.
+Note that Commander provides hook to customize preparation for different application contexts. By default it is ==prepareFullExecutionInContext:== but advanced scenarios may require a different approach.
 
 Now we need presenter to respond to ==selectedContact== to make it compatible to the context of our command:
 
