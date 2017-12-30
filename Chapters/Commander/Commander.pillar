@@ -1,18 +1,18 @@
 !! Commander: A command pattern library
 
-In this chapter you will learn about a new library to manage commands. The library is based on three main objects: ''commands'' that represent the actions to be executed, ''command activation strategies'' that represent ways commands are activated (i.e., using shortcuts, menus..) and ''contexts'' which represent the state of application, users of commands.
+In this chapter you will learn about a new library to manage commands. The library is based on three main objects: ''commands'' that represent the actions to be executed, ''command activation strategies'' that represent ways commands are activated (e.g. using shortcuts, menus) and ''contexts'' which represent the state of the application, users of commands.
 
 !!! Commands
 
 Commander models application actions as first class objects following the Command design pattern.
-Every action is implemented as separate command class (subclass of ==CmdCommand==) with the ==execute== method and all state required for execution.
+Every action is implemented as a separate command class (subclass of ==CmdCommand==) with an ==execute== method and all state required for execution.
 
 !!! An example
 
-Let's look how we can apply commands to control simple contact book.
-The code of example is packaged inside Commander-Examples package. So you can load it and play.
+Let's look at how we can apply commands to control a simple book of contacts.
+The code of example is packaged inside the Commander-Examples package, so you can load it and play along.
 
-In our domain we need two classes one for the contact and one for the contact book.
+In our domain, we need two classes - one for the contact and one for the book.
 
 !!!! 1. Contact with name and phone
 
@@ -74,7 +74,7 @@ RenameContactCommand >> execute
 	contact name: newName
 ]]]
 
-We need accessors and constructors for all these classes. For example for the command it would be:
+We need accessors and constructors for all these classes. For example, for the command it would be:
 
 [[[
 RenameContactCommand class >> contact: aContact to: newNameString
@@ -83,7 +83,7 @@ RenameContactCommand class >> contact: aContact to: newNameString
 			newName: newNameString
 ]]]
 
-And in playground we are able rename contact using command:
+And in a playground, we are able rename a contact using this command:
 
 [[[
 | contact command |
@@ -94,10 +94,10 @@ command execute.
 
 !!! Adding a simple UI
 
-Before we continue we should write simple UI which will show contact book contents.
-You should be fimilar with Spec UI framework to follow this example.
+Before we continue, we should write a simple UI which will show the contact book's contents.
+This example uses the Spec UI framework. It's documentation is SEE HERE.
 
-We need just one presenter which will show contact table
+We need just one presenter which will show a contact table.
 
 [[[
 ComposablePresenter subclass: #ContactBookPresenter
@@ -114,7 +114,7 @@ ContactBookPresenter >> initializeWidgets
 	table items: contactBook contents
 ]]]
 
-Also let's define a reusable book as class side variable
+Also, let's define a reusable book as a class side variable. 
 
 [[[
 ContactBook >> family
@@ -122,11 +122,11 @@ ContactBook >> family
 		family := self new
 			add: 'John' phone: '342 345';
 			add: 'Bill' phone: '123 678';
-			add: 'Marry' phone: '789 567';
+			add: 'Mary' phone: '789 567';
 			yourself ]
 ]]]
 
-Now we are able show family phone book with Spec UI:
+Now we are able to show a family phone book with our Spec UI:
 
 [[[
 ContactBookPresenter class >> familyExample
@@ -134,25 +134,25 @@ ContactBookPresenter class >> familyExample
 	^ (self on: ContactBook family) openWithSpec
 ]]]
 
-We put it as example. So you can run it from the browser using suitable icon:
+Note that we declared it an example with the `<example>` annotation. This makes it runnable from the browser with a suitable icon:
 
 %+Family book window.>file://Figures/Family.png+
 %+Family book window.>file://figures/Family.png|label=Family+
 
 !!! Activation strategy
 
-Commands are reusable objects and applications provide various ways to access them: shortcuts, context menu, buttons, etc.
+Commands are reusable objects and applications provide various ways to access them: shortcuts, context menus, buttons, etc.
 This information is attached to command classes as activation strategies. Currently there are three types of activations:
 - ==CmdShortcutCommandActivation==
 - ==CmdContextMenuCommandActivation==
 - ==CmdDragAndDropCommandActivation==
 
-Strategies annotate command as contextual class annotations. Look at the project ClassAnnotation for details *https://github.com/dionisiydk/ClassAnnotation*.
+Strategies annotate a command as contextual class annotations. Look at the project ClassAnnotation for details *https://github.com/dionisiydk/ClassAnnotation*.
 
-Strategies are always attached to commands with concrete application context where they can be used.
+Strategies are always attached to commands via a concrete application context where they can be used.
 In the simplest case, it can be just a class of user application or widget like the class ==ContactBookPresenter==.
 
-For example the following method allows an instance of ==RenameContactCommand== to be executed by shortcut in the context of our presenter:
+For example, the following method allows an instance of ==RenameContactCommand== to be executed by shortcut in the context of our presenter:
 
 [[[
 RenameContactCommand class >> shortcutActivation
@@ -160,7 +160,7 @@ RenameContactCommand class >> shortcutActivation
 	^ CmdShortcutCommandActivation by: $r meta for: ContactBookPresenter
 ]]]
 
-Similarly the following method ==menuActivation== defines that the ==RenameContactCommand== can be executed from a context menu. Note the use of ==CmdContextMenuCommandActivation== in the method, while the previous one was using ==CmdShortcutCommandActivation==.
+Similarly the following method, ==menuActivation==, allows the ==RenameContactCommand== to be executed from a context menu. Note the use of ==CmdContextMenuCommandActivation== in the method, while the previous one was using ==CmdShortcutCommandActivation==.
 
 [[[
 RenameContactCommand class >> menuActivation
@@ -169,11 +169,11 @@ RenameContactCommand class >> menuActivation
 ]]]
 
 
-!!!! Setup the presenter
+!!!! Set up the presenter
 
-Now when you open window neither shortcuts or context menu will work. The problem is that Spec has no information about Commander. Spec only provides basic functionality to define menu and shortcuts on low level. So you should manually activate Commander in your Spec presenter.
+At the moment, when you open a window neither shortcuts or the context menu will work. The problem is that Spec has no information about Commander. Spec only provides basic functionality to define a menu and shortcuts on a low level. We must manually activate Commander in your Spec presenter.
 
-Modify ==initializeWidgets== method to activate context menu:
+Modify the ==initializeWidgets== method to activate context menu:
 
 [[[
 ContactBookPresenter >> initializeWidgets
@@ -184,10 +184,10 @@ ContactBookPresenter >> initializeWidgets
 	table enableCommanderMenuBy: self
 ]]]
 
-===enableCommanderMenuBy:=== adds context menu to table presenter which will be filled by commands defined in context of presenter in the argument (==ContactBookPresenter==).
+===enableCommanderMenuBy:=== adds a context menu to the table presenter which will be filled by commands defined in the context of the presenter argument (a ==ContactBookPresenter==).
 
-In this case the right click on table will show the menu with single item named ==RenameContactCommand==.
-To specify better name for menu, you need to define the method ==defaultMenuItemName==:
+In this case, right clicking on the table will show the menu with a single item named ==RenameContactCommand==.
+To specify a better name for the menu item, you need to define the method ==defaultMenuItemName==:
 
 [[[
 RenameContactCommand >> defaultMenuItemName
@@ -196,8 +196,8 @@ RenameContactCommand >> defaultMenuItemName
 
 !!! Getting the information from the user
 
-Now if you will click on 'Rename' menu item you will get an exception. From the debugger you can investigate that command instance is not initialized: ==contact== and ==newName== are nil.
-Commander provides method where command should retrieve required state from given context instance:
+Now, if you click on the 'Rename' menu item, you will get an exception. From the debugger you can investigate that the command instance is not initialized: ==contact== and ==newName== are nil.
+Commander provides a method where a command should retrieve the required state from the given context instance:
 
 [[[
 RenameContactCommand >> prepareExecutionInContext: aToolContext
@@ -212,29 +212,29 @@ RenameContactCommand >> prepareExecutionInContext: aToolContext
 	newName isEmptyOrNil | (newName = contact name) ifTrue: [ ^ CmdCommandAborted signal ]
 ]]]
 
-By default (with help of Spec integration) Commander will pass presenter instance to aToolContext argument. But in general it is not enough and you will see example later.
+By default (with the help of Spec integration) Commander will pass a presenter instance as the argument (aToolContext). But in general it is not enough and you will see example later.
 
-Now you only need to know that context represents application state and in ==prepare== method we define what information is required to be able reuse commands in various applications.
+For now, you only need to know that a context represents application state and that in the ==prepare==… method we define the information required to be able reuse commands in various applications.
 
-In our example we expect to receive ==selectedContact== from the context. And we request ==newName== directly from user.
-Notice that Commander provides way how to define specific preparation method for specific application context. By default it is ==prepareExecutionInContext:== but it can be different for advanced scenarios.
+In our example, we expect to receive ==selectedContact== from the context and we request a ==newName== directly from the user.
+Note that Commander provides hook to customize preparation for different application contexts. By default it is ==prepareExecutionInContext:== but advanced scenarios may require a different approach.
 
-So we need ==selectedContact== for presenter to make it compatible to context of our command:
+Now we need presenter to respond to ==selectedContact== to make it compatible to the context of our command:
 
 [[[
 ContactBookPresenter >> selectedContact
 	^ table selectedItem
 ]]]
 
-Now if you will click on 'Rename' item you will be requested for new contact name. But after submit the view will be not updated. Reopen presenter window to see the result.
+If you now click on the 'Rename' item, you will be prompted for a new contact name. However, after submitting, the view will be not updated. To see the result for now, reopen presenter window.
 
 !!!! Refreshing the view
 
-It is your responsibility to manage updates between application and model. You can use some event mechanism which will automatically update view after modification of model.
+It is your responsibility to manage updates between the application and model. You can use some event mechanism which will automatically update the view after modification of the model.
 
-But Commander provides very simple way to apply result of command which can be also used to update the view.
+But Commander provides a very simple way to apply the result of a command which can be also be used to update the view.
 
-==applyResultInContext:== is called when command is executed. You can implement it on your commands to produce desired effect in context of your application:
+==applyResultInContext:== is called when the command is executed. You can implement it on your commands to produce the desired effect in the context of your application:
 
 [[[
 RenameContactCommand>>applyResultInContext: aToolContext
@@ -243,31 +243,31 @@ RenameContactCommand>>applyResultInContext: aToolContext
 	aToolContext updateView
 ]]]
 
-Here we require that context should be able update the view. And presenter should support it:
+Here we require that the context should be able update the view, so our presenter should support it:
 
 [[[
 ContactBookPresenter >> updateView
 	table items: contactBook contents
 ]]]
 
-Now context menu is working fine: it asks new name and table updates after submit.
+Now the context menu is working as we would expect: it asks for a new name and updates the table with the result.
 
 !!!! Enabling shorcuts
 
-Now we can enable shortcuts on the presenter. Just implement method ==ensureKeyBindingsFor:==:
+Now we can enable shortcuts on the presenter. Just implement the method ==ensureKeyBindingsFor:==:
 
 [[[
 ContactBookPresenter >> ensureKeyBindingsFor: aWidget
 	self enableCommanderShortcutsIn: aWidget
 ]]]
 
-Then reopen window, select contact and press cmd+r (on Mac). You will get same UI dialog as in case of menu.
+Then reopen the window, select a contact and press cmd+r (on Mac). You will get same the UI dialog as in the case of the menu.
 
 !!! Adding more commands
 
-At the end try create few other commands. With ready infrastructure in presenter the creation of new commands is very straightforward process:
+Finally, let's try to create a few other commands. Since the presenter's infrasturcture has already been set up, the creation of new commands is a very straightforward process:
 
-!!!! 1. Command to modify contact phone number:
+!!!! 1. Command to modify a contact's phone number:
 
 [[[
 CmdCommand subclass: #ChangePhoneCommand
@@ -310,7 +310,7 @@ ChangePhoneCommand class >> shortcutActivation
 	^CmdShortcutCommandActivation by: $p meta for: CmdContactBookPresenter
 ]]]
 
-!!!! 2. Command to remove contact:
+!!!! 2. Command to remove a contact:
 
 [[[
 CmdCommand subclass: #RemoveContactCommand
@@ -336,17 +336,17 @@ RemoveContactCommand >> defaultMenuItemName
 	^'Remove'
 ]]]
 
-Here we extend our requirement to the context: to be able remove a contact we also need a contact book instance where we should perform deletion.
+Here we must extend the context a bit. To be able remove a contact, we will need a contact book instance from which the contact should be deleted.
 
-And we implement new method ==selectedContactBook== in the presenter:
+Therefore, we will implement a new method - ==selectedContactBook== - in the presenter:
 
 [[[
 ContactBookPresenter >> selectedContactBook
 	^contactBook
 ]]]
 
-Notice that in ==prepare== method we could call accessor ==contactBook== from aToolContext. But it leads to bad reusability of command because the name ==contactBook== means single book instance while other applications can provide multiple of them in same way like our current presenter provides multiple contacts.
-So in sense of tool context it is better to call ==selectedContactBook== because it is better reflects abstract requirement of information: we expect that there will be selected book in the context of command activation.
+Notice that in our ==prepare== method, we ''could'' send the ==contactBook== accessor to aToolContext. Unfortunately, that limits reusability of our command because the name ==contactBook== assumes that there is only a single book instance while other applications might provide multiple contact books.
+So it is better to send ==selectedContactBook== because it better reflects the abstract requirement of the information: we expect that there will be a selected book in the context of the command activation.
 
 Activation methods:
 
@@ -393,7 +393,7 @@ AddContactCommand >> defaultMenuItemName
 	^'New contact'
 ]]]
 
-In preparation we request user for both name and phone number in simple comma separated form.
+Above, we request the required information from the user: both a name and phone number in a simple comma separated form.
 
 Activation methods:
 
@@ -409,26 +409,26 @@ AddContactCommand class >> shortcutActivation
 
 %+Family book menu>file://figures/FamilyMenuDefault.png+
 
-It is up to you to maintain commands in good shape. For example commands here use same state ==contact== and duplicate method ==applyResultInContext:==. You can refactor it with your taste, extract common superclass and so on. (In the example package they are not refactored)
+As you create more commmands, pay attention for refactoring opportunities. For example, our commands in this tutorial duplicate both state (==contact==) and behavior (==applyResultInContext:==). As an exercise, try refactoring to your taste by extracting a common superclass and so on.
 
 @@todo Stef here
 
 !!! Extra command conditions
 
-Now there will be error if you will try rename contact when no item is selected in the table.
+Currently, there will be error if you try to rename a contact when no item is selected in the table.
 
-Normally menu should not include items in such cases or they should be disabled.
+Normally the menu should not include items in such cases or they should be disabled.
 
-To define runtime condition where command can be activated you need class side method ==canBeExecutedInContext:==:
+To define the runtime conditions of command activation you need a class side method ==canBeExecutedInContext:==:
 
 [[[
 RenameContactCommand class>>canBeExecutedInContext: aToolContext
 	^aToolContext isContactSelected
 ]]]
 
-(As default implementation any command can be executed in any context. So by default this message returns true)
+(The default implementation allows any command to be executed in any context by always returning true)
 
-And presenter should implement ==isContactSelected==:
+And the presenter should implement ==isContactSelected==:
 [[[
 ContactBookPresenter>>isContactSelected
 	^table selectedItem notNil
