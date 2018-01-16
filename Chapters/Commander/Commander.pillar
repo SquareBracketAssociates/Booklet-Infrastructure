@@ -41,10 +41,14 @@ Object subclass: #ContactBook
 	package: 'Commander-Examples'
 ]]]
 
+@@todo add initialize with contents := OrderedCollection new.
+
 [[[
 ContactBook >> addContact: aContact
 	contents add: aContact
 ]]]
+
+@@todo add CmdContact >> #named: contactName phone: phone.
 
 [[[
 ContactBook >> add: contactName phone: phone
@@ -60,6 +64,8 @@ ContactBook >> includesContact: aContact
 ]]]
 
 !!!! 3. A first command
+@@todo this could be before ContactBook definition.
+
 Now we can create ==RenameContactCommand== to rename given contact
 
 [[[
@@ -88,7 +94,7 @@ And in a playground, we are able rename a contact using this command:
 [[[
 | contact command |
 contact := Contact new.
-command := RenameContactCommand contact: contact newName: 'John Smith'.
+command := RenameContactCommand contact: contact to: 'John Smith'.
 command execute.
 ]]]
 
@@ -106,12 +112,14 @@ ComposablePresenter subclass: #ContactBookPresenter
 	package: 'Commander-Examples'
 ]]]
 
+@@todo initialize contactBook := ContactBook new or remote table items:
+
 [[[
 ContactBookPresenter >> initializeWidgets
 	table := self newList.
 	table numberOfColumns: 2 withWidths: #(250 250).
 	table displayBlock: [ :contact | {contact name. contact phone} ].
-	table items: contactBook contents
+	table items: contactBook contents.
 ]]]
 
 Also, let's define a reusable book as a class side variable.
@@ -125,6 +133,10 @@ ContactBook class >> family
 			add: 'Mary' phone: '789 567';
 			yourself ]
 ]]]
+
+@@todo add defaultSpec method.
+@@todo add setModelBeforeInitialization:
+@@todo add table method.
 
 Now we are able to show a family phone book with our Spec UI:
 
@@ -160,14 +172,18 @@ RenameContactCommand class >> shortcutActivation
 	^ CmdShortcutCommandActivation by: $r meta for: ContactBookPresenter
 ]]]
 
-Similarly the following method, ==menuActivation==, allows the ==RenameContactCommand== to be executed from a context menu. Note the use of ==CmdContextMenuCommandActivation== in the method, while the previous one was using ==CmdShortcutCommandActivation==.
+Similarly the following method, ==contextMenuActivation==, allows the ==RenameContactCommand== to be executed from a context menu. Note the use of ==CmdContextMenuCommandActivation== in the method, while the previous one was using ==CmdShortcutCommandActivation==.
 
 [[[
-RenameContactCommand class >> menuActivation
+RenameContactCommand class >> contextMenuActivation
 	<classAnnotation>
 	^CmdContextMenuCommandActivation byRootGroupItemFor: ContactBookPresenter
 ]]]
 
+If you execute again the family example of  ==ContactBookPresenter==
+class, you will notice that the commands do not work yet. The context
+menu is not displayed, neither the shortcut works. We first need to
+set up the presenter.
 
 !!!! Set up the presenter
 
@@ -180,9 +196,11 @@ ContactBookPresenter >> initializeWidgets
 	table := self newList.
 	table numberOfColumns: 2 withWidths: #(250 250).
 	table displayBlock: [ :contact | {contact name . contact phone} ].
-	table items: contactBook contents
-	table enableCommanderMenuBy: self
+	table items: contactBook contents.
+	table enableCommanderMenuBy: self.
 ]]]
+
+@@todo shortcut does not work
 
 ===enableCommanderMenuBy:=== adds a context menu to the table presenter which will be filled by commands defined in the context of the presenter argument (a ==ContactBookPresenter==).
 
@@ -214,7 +232,7 @@ RenameContactCommand >> prepareFullExecutionInContext: aToolContext
 
 By default (with the help of Spec integration) Commander will pass a presenter instance as the argument (aToolContext). But in general it is not enough and you will see example later.
 
-For now, you only need to know that a context represents application state and that in the ==prepare==… method we define the information required to be able reuse commands in various applications.
+For now, you only need to know that a context represents application state and that in the ==prepare==… method we define the information required to be able to reuse commands in various applications.
 
 In our example, we expect to receive ==selectedContact== from the context and we request a ==newName== directly from the user.
 Note that Commander provides hook to customize preparation for different application contexts. By default it is ==prepareFullExecutionInContext:== but advanced scenarios may require a different approach.
@@ -232,9 +250,7 @@ If you now click on the 'Rename' item, you will be prompted for a new contact na
 
 It is your responsibility to manage updates between the application and model. You can use some event mechanism which will automatically update the view after modification of the model.
 
-But Commander provides a very simple way to apply the result of a command which can be also be used to update the view.
-
-==applyResultInContext:== is called when the command is executed. You can implement it on your commands to produce the desired effect in the context of your application:
+But Commander provides a very simple way to apply the result of a command which can be also used to update the view. The ==applyResultInContext:== method is called when the command is executed. You can implement it on your commands to produce the desired effect in the context of your application:
 
 [[[
 RenameContactCommand>>applyResultInContext: aToolContext
@@ -253,6 +269,9 @@ ContactBookPresenter >> updateView
 Now the context menu is working as we would expect: it asks for a new name and updates the table with the result.
 
 !!!! Enabling shorcuts
+
+@@todo the command activation could be moved here
+@@todo explain what this ensureKeyBindingsFor: does
 
 Now we can enable shortcuts on the presenter. Just implement the method ==ensureKeyBindingsFor:==:
 
@@ -303,11 +322,11 @@ Activation methods:
 [[[
 ChangePhoneCommand class >> contextMenuActivation
 	<classAnnotation>
-	^CmdContextMenuCommandActivation byRootGroupItemFor: CmdContactBookPresenter
+	^CmdContextMenuCommandActivation byRootGroupItemFor: ContactBookPresenter
 
 ChangePhoneCommand class >> shortcutActivation
 	<classAnnotation>
-	^CmdShortcutCommandActivation by: $p meta for: CmdContactBookPresenter
+	^CmdShortcutCommandActivation by: $p meta for: ContactBookPresenter
 ]]]
 
 !!!! 2. Command to remove a contact:
@@ -348,16 +367,18 @@ ContactBookPresenter >> selectedContactBook
 Notice that in our ==prepare== method, we ''could'' send the ==contactBook== accessor to aToolContext. Unfortunately, that limits reusability of our command because the name ==contactBook== assumes that there is only a single book instance while other applications might provide multiple contact books.
 So it is better to send ==selectedContactBook== because it better reflects the abstract requirement of the information: we expect that there will be a selected book in the context of the command activation.
 
+@@todo we also need to implement removeContact: method
+
 Activation methods:
 
 [[[
 RemoveContactCommand class >> contextMenuActivation
 	<classAnnotation>
-	^CmdContextMenuCommandActivation byRootGroupItemFor: CmdContactBookPresenter
+	^CmdContextMenuCommandActivation byRootGroupItemFor: ContactBookPresenter
 
 RemoveContactCommand class >> shortcutActivation
 	<classAnnotation>
-	^CmdShortcutCommandActivation by: $x meta for: CmdContactBookPresenter
+	^CmdShortcutCommandActivation by: $x meta for: ContactBookPresenter
 ]]]
 
 !!!! 3. Command to add contact:
@@ -377,7 +398,7 @@ AddContactCommand >> prepareFullExecutionInContext: aToolContext
 	contactBook := aToolContext selectedContactBook.
 
 	nameAndPhone := UIManager default
-		request: 'Enter new contact name and phone (split by comma)'
+		request: 'Enter new contact name and phone (split by semicolon)'
 		initialAnswer: 'name;phone'
 		title: 'Create new contact'.
 	nameAndPhone isEmptyOrNil ifTrue: [ ^ CmdCommandAborted signal ].
@@ -393,23 +414,23 @@ AddContactCommand >> defaultMenuItemName
 	^'New contact'
 ]]]
 
-Above, we request the required information from the user: both a name and phone number in a simple comma separated form.
+Above, we request the required information from the user: both a name and phone number in a semicolon separated form.
 
 Activation methods:
 
 [[[
 AddContactCommand class >> contextMenuActivation
 	<classAnnotation>
-	^CmdContextMenuCommandActivation byRootGroupItemFor: CmdContactBookPresenter
+	^CmdContextMenuCommandActivation byRootGroupItemFor: ContactBookPresenter
 
 AddContactCommand class >> shortcutActivation
 	<classAnnotation>
-	^CmdShortcutCommandActivation by: $n meta for: CmdContactBookPresenter
+	^CmdShortcutCommandActivation by: $n meta for: ContactBookPresenter
 ]]]
 
 %+Family book menu>file://figures/FamilyMenuDefault.png+
 
-As you create more commmands, pay attention for refactoring opportunities. For example, our commands in this tutorial duplicate both state (==contact==) and behavior (==applyResultInContext:==). As an exercise, try refactoring to your taste by extracting a common superclass and so on.
+As you create more commands, pay attention for refactoring opportunities. For example, our commands in this tutorial duplicate both state (==contact==) and behavior (==applyResultInContext:==). As an exercise, refactor to your taste by extracting a common superclass and so on.
 
 @@todo Stef here
 
@@ -454,7 +475,7 @@ To change the order the activation strategy should be created with extra paramet
 [[[
 RenameContactCommand >> contextMenuActivation
 	<classAnnotation>
-	^CmdContextMenuCommandActivation byRootGroupItemOrder: 1 for: CmdContactBookPresenter
+	^CmdContextMenuCommandActivation byRootGroupItemOrder: 1 for: ContactBookPresenter
 ]]]
 
 The lesser order value puts item to the top of menu list.
@@ -466,7 +487,7 @@ The lesser order value puts item to the top of menu list.
 Commander allows create hierarchical menu using reified menu groups.
 Imaging that you want put 'New phone' command under 'Phone operations' submenu.
 
-First you need new subclass of CmdMenuGroup:
+First you need new subclass of ==CmdMenuGroup== class:
 
 [[[
 CmdMenuGroup subclass: #PhoneMenuGroup
@@ -480,7 +501,7 @@ And then add this class as extra parameter to the menu activation strategy:
 [[[
 ChangePhoneCommand >> contextMenuActivation
 	<classAnnotation>
-	^CmdContextMenuCommandActivation byItemOf: PhoneMenuGroup for: CmdContactBookPresenter
+	^CmdContextMenuCommandActivation byItemOf: PhoneMenuGroup for: ContactBookPresenter
 ]]]
 
 It will moves ChangePhoneCommand to extra submenu with name 'PhoneMenuGroup'. You can specify better name as in case of commands:
@@ -503,7 +524,7 @@ DeepChildrenMenuGroup class>>parentGroup
 
 Commander uses separators to represent inlined menu groups.
 
-If group is marked as inlined then all items are added to the parent group with required separator lines. To inline group you need override method ==isInlined==:
+If group is marked as inlined then all items are added to the parent group with required separator lines. To inline group you need override ==isInlined== method:
 
 [[[
 PhoneMenuGroup>>isInlined
@@ -547,7 +568,7 @@ RenameContactCommand>>fillContextMenu: aMenu using: aCommandActivator
 
 %+Custom menu item>file://Figures/FamilyMenuWithCustomItem.png+
 
-You can notice here that command can be represented by multiple menu items. ==fillContextMenu== method provides full control under menu.
+You can notice here that command can be represented by multiple menu items. The ==fillContextMenu:using:== method provides full control under menu.
 For example you can generate multiple command copies with some specific parameters. It allows dynamic menus which can be needed in some cases.
 
 Also same kind of flexibility is available for groups. Look at default implementation of menu group for example:
@@ -571,15 +592,14 @@ In this section you will learn how activate commands using drag and drop operati
 During drag and drop operation user grabs some element from one widget and drops it on another widget. And the application handles special event which brings together the information about source and target elements.
 
 Commander uses drag and drop to prepare commands in two steps:
+1) When a user starts to drag an element from a widget, Commander finds and prepares commands in the context of this widget and dragged element. Found commands are then used as passengers of the drag operation.
+2) When the user drops element to a widget, Commander selects a corresponding command among the dragged commands that fits to the declared drop context and the context of the target widget. Commander then executes the selected command.
 
-1) When user starts drag some element from the widget Commander finds and prepares commands in the context of this widget and dragged element. Then found commands are used as passengers of drag operation.
-2) When user drops element to the widget Commander filters current dragged commands using declared drop context and the context of target widget. At the end it executes found command.
+If Commander does not find any command in the drag context, the drag and drop operation is not started.
 
-If Commander does not find any commands in drag context the drag and drop operation is not started.
+If Commander does not find any command suitable for the drop context, it forbids drop on the current widget. UI gives visual feedback for the places where the drop can be executed. And when the drop is forbidden you will not see this effect.
 
-If Commander does not find any command suitable for drop context it forbids drop on current widget. UI gives visual feedback for the places where drop can be executed. And when drop is forbidden you will not see this effect.
-
-If Commander finds multiple commands suitable for the drop context it will show menu to request user to choose concrete action.
+If Commander finds multiple commands suitable for the drop context it will show menu to request user to choose one.
 
 Now we can annotate existing command ==AddContactCommand== with drag and drop activation:
 
@@ -589,7 +609,7 @@ AddContactCommand class >> dragAndDropActivation
 	^CmdDragAndDropCommandActivation for: ContactBookPresenter toDropIn: ContactBookPresenter
 ]]]
 
-First parameter describes context where drag can be started. And last parameter is a context where drop can be executed. In example both are the same presenter which enables drag and drop contacts between contact books.
+First parameter describes context where drag can be started. And last parameter is a context where drop can be executed. In the example above, both contexts are the same presenter which enables drag and drop contacts between contact books.
 
 As in example with context menu and shortcuts we also need activate Commander based drag and drop in our presenter. It should be enabled in ==initializeWidgets== method:
 
@@ -617,7 +637,7 @@ AddContactCommand >> prepareExecutionInDragContext: aToolContext
 	contact := aToolContext selectedContact
 ]]]
 
-==prepareExecutionInDragContext== extracts information from the context of drag operation. In that case we decided that command can be only executed by drag of ==selectedContact==.
+The ==prepareExecutionInDragContext:== method extracts information from the context of drag operation. In that case we decided that command can be only executed by drag of ==selectedContact==.
 
 [[[
 AddContactCommand >> prepareExecutionInDropContext: aToolContext
@@ -626,9 +646,9 @@ AddContactCommand >> prepareExecutionInDropContext: aToolContext
 	contactBook := aToolContext selectedContactBook
 ]]]
 
-And in second method ==prepareExecutionInDropContext== we extract the rest information from the context where the drop was executed. In that case we decided that command can be only executed by drop into the ==selectedContactBook==.
+And in the second method ==prepareExecutionInDropContext:== we extract the rest information from the context where the drop was executed. In that case, we decided that command can be only executed by drop into the ==selectedContactBook==.
 
-Now drag and drop should work. To play with it let's create another book of coworkers on the class side of ==ContactBook==:
+Now drag and drop should work. To play with it let's create another book of co-workers on the class side of ==ContactBook==:
 
 [[[
 ContactBook class >> coworkers
@@ -650,7 +670,9 @@ ContactBookPresenter class>>coworkersExample
 
 Now open two windows: ==coworkersExample== and ==familyExample==. And drag and drop contacts between them.
 
-You can notice that you are able dublicate contact when it already exists in the target book. Also dublication happens when you drop contact in same source book.
+@@todo the books are not updated when dragged from different books, but updated when dragged to the same book
+
+You can notice that you are able dublicate contact when it already exists in the target book. The duplication also happens when you drop contact in same source book.
 
 To prevent it you can specify extra runtime condition ==canBeExecutedInDropContext:== as in case of full command execution:
 
@@ -660,9 +682,11 @@ AddContactCommand>>canBeExecutedInDropContext: aToolContext
 		and: [ (aToolContext selectedContactBook includesContact: contact) not ]
 ]]]
 
+@@todo add isContactBookSelected definition
+
 Notice that this method is on instance side and it can use the data which was extracted from drag context. Here we check that ==contact== not exists in the target contact book.
 
-When Commander collects commands at the time of drag operation it prepares them using method ==prepareExecutionInDragContext==. So at the time of drop operation all found commands are initialized with information from drag context.
+When Commander collects commands at the time of drag operation it prepares them using method ==prepareExecutionInDragContext:==. So at the time of the drop operation all found commands are initialized with information from the drag context.
 
 Also notice that here we add extra check ==isContactBookSelected==. We can omit it because in our example contact book always exists in presenter. But for reusability purpose we should implement this method independently from our knowledge about existing context. Imaging that we will have another presenter with table of existing books and we will need to drop contacts to it items. In that case it will be required to check that book is actually selected. Instead we will get error when table has no selection.
 
@@ -670,13 +694,13 @@ So at the end our presenter do not accept drops of contacts which aready exist i
 
 !!! Complex contexts
 
-In examples command context was always represented by presenter itself. It is default behavior of Spec integration with Commander.
+Until now, the command context was always represented by presenter itself. It is default behavior of the Spec integration with Commander.
 
-Problem with this approach is that presenter is always bound to its own current state. It is fine for simple cases. But for example you are not able to activate our commands in context of contact which is not selected in the table. Following example demonstrates problem in live:
+Problem with this approach is that the presenter is always bound to its own current state. It is fine for simple cases. However, it is then not possible to activate commands in a context of contact that is not selected in the table. The following example demonstrates problem in live:
 
-You can notice that dropping contact into the book always adds it to the end of list. But drop operation is always points to some element in the table. So we can support drop to the particular position.
+You can notice that dropping contact into the book always adds it to the end of list. But drop operation always points to an element in the table. So we can support drop to the particular position.
 
-For this we need extend ==AddContactCommand== with ==afterContact== variable after which we will add new contact:
+For this we need to extend ==AddContactCommand== with ==afterContact== variable after which we will add new contact:
 
 [[[
 CmdCommand subclass: #AddContactCommand
@@ -685,7 +709,7 @@ CmdCommand subclass: #AddContactCommand
 	package: 'Commander-Examples'
 ]]]
 
-And we should modify execution method to take into account new logic. Also we need extra method ==addContact:after:== for ==ContactBook==:
+And we should modify execution method to take into account new logic. Also we need extra method ==addContact:after:== in ==ContactBook==:
 
 [[[
 AddContactCommand>>execute
@@ -711,17 +735,15 @@ AddContactCommand>>prepareFullExecutionInContext: aToolContext
 		afterContact := aToolContext selectedContact].
 
 	nameAndPhone := UIManager default
-		request: 'Enter new contact name and phone (split by comma)'
-		initialAnswer: 'name,phone'
+		request: 'Enter new contact name and phone (split by semicolon)'
+		initialAnswer: 'name;phone'
 		title: 'Create new contact'.
 	nameAndPhone isEmptyOrNil ifTrue: [ ^ CmdCommandAborted signal ].
-	pair := (',' split: nameAndPhone).
+	pair := (';' split: nameAndPhone).
 	contact := CmdContact named: pair first phone: pair last
 ]]]
 
-New contact will be added after selected contact in the context of target presenter (aToolContext is a presenter instance for now).
-
-You can test new logic by creation new contacts from menu or by shortcuts.
+New contact will be added after selected contact in the context of target presenter (aToolContext is a presenter instance for now). You can test new logic by creating new contacts from the context menu or by the shortcut.
 
 For drag and drop case we should also modify ==prepareExecutionInDropContext:==:
 
@@ -738,7 +760,7 @@ Now if you would play with drag and drop you will notice that it works in not ex
 
 The problem is that the selection of the drop target is the static state of the target book presenter. It could not be different depending on the actual place of drop operation.
 
-And here we finally should introduce the real context which will incapsulate selected contact independently of presenter. This example shows that the simple case where presenter is its own context has limitations.
+This example shows that the simple case where presenter is its own context has limitations. We should finally introduce the real context which will encapsulate selected contact independently of presenter. 
 
 Contexts are subclasses of ==CmdToolContext== and they should include all information to describe the state of underlying tool. In our case it will include ==selectedContacts== variable:
 
@@ -749,28 +771,29 @@ CmdToolContext subclass: #ContactBookPresenterContext
 	package: 'Commander-Examples'
 ]]]
 
-For Spec support Commander passes multiple items to request context from presenter. So we should use contact collection instead of single item. And generally it is more common case. Selection can include multiple items.
-
-In addition context should support all methods which are required by commands:
+Commander passes multiple items to the request context from presenter. This is a default behavior of Spec as the selection can include multiple items. For that reason, we should use the contact collection instead of a single item. In addition, context should support all methods which are required by commands:
 
 [[[
 ContactBookPresenterContext>>selectedContact
 	^selectedContacts last "last selected item"
 
 ContactBookPresenterContext>>isContactSelected
-		^selectedContacts notEmpty
+	^selectedContacts notEmpty
 
 ContactBookPresenterContext>>selectedContactBook
-		^tool contactBook
+	^tool contactBook
 
 ContactBookPresenterContext>>isContactBookSelected
-		^true
+	^true
+
+ContactBookPresenterContext>>updateView
+	tool updateView
 ]]]
 
 Notice that base class of context ==CmdToolContext== provides ==tool== variable which is presenter instance in our case.
 
-Also to implement ==selectedContactBook== we do not need to call ==selectedContactBook== from presenter. It was the message to represent presenter as own context. So ==selectedContactBook== can be removed from presenter together with ==isContactBookSelected== method because they are now defined by reified context class.
-(==ContactBookPresenterContext== tightly bound to the ==ContactBookPresenter==. It knows that contact book is mondatory property of presenter and it can call accessor directly).
+Also to implement ==selectedContactBook== we do not need to call ==selectedContactBook== from presenter. It was the message to represent presenter as own context. So ==selectedContactBook== can be removed from presenter together with the ==isContactBookSelected== method because they are now defined by reified context class.
+(==ContactBookPresenterContext== tightly bound to the ==ContactBookPresenter==. It knows that contact book is mondatory property of the presenter and it can call the accessor directly.
 
 To inject new context to our presenter we should override two methods:
 
@@ -780,23 +803,30 @@ ContactBookPresenter>>createCommandContextForSelection: selectedContacts
 
 ContactBookPresenter>>createCommandContext
 	^self createCommandContextForSelection: table selectedItems
+
+ContactBookPresenterContext class>>for: aPresenter of: contacts
+	^ (self for: aPresenter) selectedContacts: contacts
+
+ContactBookPresenterContext>>selectedContacts: contacts
+	selectedContacts := contacts
 ]]]
 
-First method creates concrete context instance with selected items. And last method provides default selection (from the table) to the context.
+The first method creates concrete context instance with selected items. The second method provides default selection (from the table) to the context.
+@@todo Jura: I do not understand the difference. When it is called/used? 
 
-And the last important details is needed:
+And the last important details are needed:
 
-When we introduced new context the way how Commander lookup commands is changed. By default (for Spec) Commander finds all commands which are annotated with given presenter class using isKindOf: check for this. But in general case with reified context Commander scans commands using class of context instead of class of tool.
+When we introduced new context the way how Commander lookup commands is changed. By default (in case  of the Spec framework) Commander finds all commands which are annotated with given presenter class using isKindOf:. Nevertheless, in the case with the reified context, Commander scans commands using class of context instead of class of tool.
 
-In general case activation strategies should be attached to commands using class of context instead of tool. The reason why it is implemented like this is that single application/presenter can provide multiple contexts depending on child component which triggers menu, shortcuts and so on. In general case single presenter can have many different menus. For example we can create presenter with two tables. And each table will provide own menu and shortcuts.
+In general case activation strategies should be attached to commands using class of context instead of tool. The reason why it is implemented like this is that a single application/presenter can provide multiple contexts depending on child component which triggers menu, shortcuts, and so on. The single presenter can have many different menus. Imagine the presenter with two tables where each table provides own menu and shortcuts.
 
-So if we will do nothing our example will loose all menus and shortcuts. There are two ways how to fix it:
+So if we do use the presenter as we do until now, our application will miss all menus and shortcuts. There are two ways how to fix it:
 
 1. Modify all command activations to use context class ==ContactBookPresenterContext== instead of presenter class ==ContactBookPresenter==.
 
-This approach would be required if we would extend our presenter with extra component which will provide separate set of commands. But in our example we do not need it.
+This approach would be required if we would extend our presenter with an extra component which will provide separate set of commands. But in our example we do not need it.
 
-2. Adopt our context to be simple single context of presenter.
+2. Adopt our context to be a simple single context of presenter.
 
 In case when presenter provides single set of commands we can just mark the context as simple. It is preferred solution for simple presenters because in that case internal context implementation will be hidden from users. All commands will mention only presenter class in annotations.
 
@@ -810,14 +840,15 @@ ContactBookPresenterContext>>representsSimpleAnnotationUser: aToolClass
 ]]]
 
 Now if you will try again drag and drop you will see that drop inserts contact after element where drop is executed.
+@todo Juraj: I do not understand when it happens that it the selectedContact is the one I drop on it. Can you summarize it here? What is different comparing to the situation without the ==ContactBookPresenterContext==?
 
 More details on this part:
 
-==representsSimpleAnnotationUser:== method is part of ClassAnnotation library. When you create annotation using class as context the annotation will be visible only for instances of this class hierarchy. Annotation will use simple ==isKindOf:== check to detect that given user can find it. But user can redefine this logic in the method ==representsSimpleAnnotationUser:==.
+==representsSimpleAnnotationUser:== method is part of ClassAnnotation library. When you create annotation using class as context the annotation will be visible only for instances of this class hierarchy. Annotation uses the ==isKindOf:== check to detect that given user can find it. But user can redefine this logic in the method ==representsSimpleAnnotationUser:==.
 
 In case of Commander the user of annotation is a tool context. But there is ==CmdSimpleToolContext== which is default for Spec presenters. It redefines this logic in the way that the tool becomes actual user of annotation. It simply checks that the tool is a kind of declared user class.
 
-So if you implement othere simple contexts they should redefine this method in same way as ==CmdSimpleToolContext==. And it is what we did in this example.
+So if you implement other simple contexts they should redefine this method in same way as ==CmdSimpleToolContext==. And it is what we did in this example.
 
 (Notice that ==CmdSimpleToolContext== should not be used as superclass for new contexts because it overrides other logic of base ==CmdToolContext== class)
 
@@ -831,11 +862,7 @@ All commands in our examples define standard activation methods:
 - ==prepareExecutionInDropContext:==
 - ==canBeExecutedInDropContext:==
 
-For some reason it can be impossible to reuse these methods in specific applications.
-
-In that case such application should provide special contexts which will override activation logic and send its own set of messages to command.
-
-For example:
+If you cannot reuse those methods in a specific situation (application), your context (application) should override activation logic and send another set of messages to commands. For example:
 
 [[[
 SpecialContextA >> allowsExecutionOf: aCommand
@@ -889,56 +916,56 @@ CmdContextMenuCommandActivation registeredInstances
 
 It will return all menu items in the system.
 
-To filter commands for concrete application you need context instance. For our presenter it would be:
+To filter commands for concrete application you need a context instance. For our presenter it would be:
 
 [[[
-context := (CmdContactBookPresenter on: CmdContactBook family) createCommandContext
+context := (ContactBookPresenter on: ContactBook family) createCommandContext.
 ]]]
 
 Then you can query all commands suitable for this context:
 
 [[[
-CmdShortcutCommandActivation visibleInstancesInContext: context
+CmdShortcutCommandActivation visibleInstancesInContext: context.
 ]]]
 
-It will return 4 shortcuts according to the example.
+It returns four shortcuts as we implemented four commands in this section.
 
 And you can filter them to see only active commands:
 
 [[[
-CmdShortcutCommandActivation activeInstancesInContext: context
+CmdShortcutCommandActivation activeInstancesInContext: context.
 ]]]
 
-It will return single activation because only command can be executed without selected item (by default the table selection is empty).
+It returns single activation because only the add command can be executed without selected item (by default the table selection is empty).
 
 To execute collected commands you should create the command activator instance:
 
 [[[
-activator := (CmdShortcutCommandActivation activeInstancesInContext: context) first newActivatorFor: context
+activator := (CmdShortcutCommandActivation activeInstancesInContext: context) first newActivatorFor: context.
 ]]]
 
-It incapsulates given context and performs all required logic to prepare command before execution and to apply result after execution:
+It encapsulates the given context and performs all required logic to prepare the command for its execution and to apply result after the execution:
 
 [[[
-activator executeCommand
+activator executeCommand.
 ]]]
 
-There is suitable method to enumerate all commands and execute them with prepared activator instance:
+There is a suitable method to enumerate all commands and to execute them with a prepared activator instance:
 
 [[[
 CmdShortcutCommandActivation
 	activateAllInContext: context
-	by: [:activator | activator executeCommand]
+	by: [:activator | activator executeCommand].
 ]]]
 
 !!! Menu activation
 
-There are a lot of different types of menu: context menu, toolbar, morphic halo menu, etc.
-All of them are very similar: they show set of items to the user and when user selects one the action associated with item is evaluated. The main difference between them is the way how they are represented to user and where they are shown in application.
+There is a lot of different menu types: context menu, toolbar, morphic halo menu, etc.
+All of them are very similar: they show set of items to a user and when the user selects one, the action associated with item is evaluated. The main difference between them is the way they are displayed to the user.
 
-The commander library allows the building of different kind of menus based on commands and first class groups. Concrete type of menu is represented by concrete type of activation strategy, subclass of ==CmdMenuCommandActivationStrategy==. The simplest example is ==CmdContextMenuCommandActivation== which we used to define context menu in our presenter example. Now it is only available in Commander. For other examples look at Calypso browser.
+The commander library allows the building of different kind of menus based on commands and first class groups. Concrete type of menu is represented by concrete type of activation strategy, a subclass of ==CmdMenuCommandActivationStrategy==. The simplest example is ==CmdContextMenuCommandActivation== which we used to define context menu in our presenter example. Now it is only available in Commander. For other examples look at the Calypso browser.
 
-So users annotate commands with menu activations and Commander build menus using them:
+In summary, users annotate commands with menu activations and Commander builds menus using them:
 
 [[[
 YourCommand >> yourAppMenuActivation
@@ -946,8 +973,8 @@ YourCommand >> yourAppMenuActivation
   ^ConcreteMenuCommandActivation byItemOf: YourAppChildMenuGroup for: YourAppContext
 ]]]
 
-Menu activation provides information about name, group and position of command inside menu:
-- ==menuItemName== (by default it is retrieved from command instance by sending the message ==defaultMenuItemName==).
+The menu activation provides information about name, group and position of command inside menu:
+- ==menuItemName== (by default it is retrieved from the command instance by sending the ==defaultMenuItemName== message).
 - ==menuItemOrder== (higher value pushes command to the end of menu)
 - ==menuGroup== (root by default)
 
@@ -969,9 +996,11 @@ And then you can ask it to build items which are active for given context:
 menu buildInContext: context
 ]]]
 
-If your application provides multiple context you can call this method for all of them. In that case menu will include items from all widgets which provide these context.
+If your application provides multiple contexts, you can call this method for all of them. In that case menu will include items from all widgets which provide these contexts.
 
 For our example you can inspect menu instance after ==build== method. In inspector you will see ==rootGroup== variable where you can reach menu items and underlying commands.
+
+@@todo Juraj: can you provide an example to play with? 
 
 When menu instance is ready you can ask it to create concrete menu object like Morphic context menu:
 
@@ -979,7 +1008,7 @@ When menu instance is ready you can ask it to create concrete menu object like M
 (menu buildContextMenuFor: World) openInWorld.
 ]]]
 
-It is the way how implement new kind of menus. First, create new subclass of ==CmdMenuCommandActivationStrategy== and then extend ==CmdMenu== with new logic to build required menu objects. You can extend ==CmdCommand== to represent item specifically for your type of menu.
+It is the way how to implement new kind of menus. First, create new subclass of ==CmdMenuCommandActivationStrategy== and then extend ==CmdMenu== with new logic to build required menu objects. You can extend ==CmdCommand== to represent item specifically for your type of menu.
 
 Look for details at package ==Commander-Activators-ContextMenu== which implements classic context menu based on commands.
 
@@ -1027,7 +1056,7 @@ RenameContactCommand class >> shortcutActivation
 Notice that annotations are cached and cache is updated only when declaration method is changed. It means that you should manually update cache when you modify helper methods like ==renamingFor:==:
 
 [[[
-ClassAnnotation resetAll
+ClassAnnotation resetAll.
 ]]]
 
 On the low level of Morphic integration the application should define specific kmDispatcher for target morphs:
@@ -1044,14 +1073,14 @@ YourAppMorph >> createCommandContext
   ^YourAppContext for: self
 ]]]
 
-In example we were using high level Spec integration where we just enable Commander in target presenter:
+In the book contact example, we use high level Spec integration where we enable Commander in target presenter:
 
 [[[
 ContactBookPresenter >> ensureKeyBindingsFor: aWidget
 	self enableCommanderShortcutsIn: aWidget
 ]]]
 
-So users do not need to think how morphs are connected in case of Spec.
+Users then do not need to think how morphs are connected in case of Spec.
 
 Other libraries/frameworks can privide similar integration to simplify Commander usage.
 
