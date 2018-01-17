@@ -21,7 +21,7 @@ Metacello new
 	load: #'Commander-Examples'.
 ]]]
 
-Notice that all classes of the example has ==Cmd== prefix, so there is conflict with the tutorial in this section. The implemented example represents a final version that is more complex than what is needed at the beggining. We recommend you to follow the tutorial and then compare it with the existing source code.
+Notice that all classes of the example has ==Cmd== prefix, so there is ""no"" conflict with the tutorial in this section. The implemented example represents a final version that is more complex than what is needed at the beggining. We recommend you to follow the tutorial and then compare it with the existing source code. Finally, the tutorial require Pharo version 7, as it depends on a Spec presenter class, that does not exist in previous Pharo versions.
 
 Let's start with the domain implementation. In our domain, we need two classes: one for the contact, and one for the contact book.
 
