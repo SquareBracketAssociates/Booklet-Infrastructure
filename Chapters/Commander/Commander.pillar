@@ -131,7 +131,7 @@ ComposablePresenter subclass: #ContactBookPresenter
 [[[
 ContactBookPresenter >> setModelBeforeInitialization: aDomainObject
 	contactBook := aDomainObject
-	
+
 ContactBookPresenter >> initializeWidgets
 	table := self newList.
 	table numberOfColumns: 2 withWidths: #(250 250).
@@ -555,18 +555,22 @@ PhoneMenuGroup>>isInlined
 
 !!!! Menu icons
 
-To specify icon the command should implement the instance side method ==setUpIconForMenuItem:==. For example we can add icon to the ==RemoveContactCommand==:
+To specify simple icon the command should implement class side method ==defaultMenuIconName==. For example we can add icon to the ==RemoveContactCommand==:
 
 [[[
-RemoveContactCommand>>setUpIconForMenuItem: aMenuItemMorph
-	self setUpIconNamed: #removeIcon forMenuItem: aMenuItemMorph
+RemoveContactCommand class>>defaultMenuIconName
+	^#removeIcon
 ]]]
 
 %+Iconic menu item>file://Figures/FamilyMenuWithIcon.png+
 
-As you can see it is not primitive ==icon== method which returns the icon instance.
+If you need complex icon which depends on command state you should implement instance side method #defaultMenuIcon.
+For example following method will add random icon for into menu item:
 
-The idea is to be able create dynamic and complex icons based on command state.
+[[[
+RemoveContactCommand>>defaultMenuIcon
+	^Smalltalk ui icons icons atRandom
+]]]
 
 !!!! Custom menu items
 
@@ -789,7 +793,7 @@ Now if you would play with drag and drop you will notice that it works in not ex
 
 The problem is that the selection of the drop target is the static state of the target book presenter. It could not be different depending on the actual place of drop operation.
 
-This example shows that the simple case where presenter is its own context has limitations. We should finally introduce the real context which will encapsulate selected contact independently of presenter. 
+This example shows that the simple case where presenter is its own context has limitations. We should finally introduce the real context which will encapsulate selected contact independently of presenter.
 
 Contexts are subclasses of ==CmdToolContext== and they should include all information to describe the state of underlying tool. In our case it will include ==selectedContacts== variable:
 
@@ -841,7 +845,7 @@ ContactBookPresenterContext>>selectedContacts: contacts
 ]]]
 
 The first method creates concrete context instance with selected items. The second method provides default selection (from the table) to the context.
-@@todo Juraj: I do not understand the difference. When they are called/used? 
+@@todo Juraj: I do not understand the difference. When they are called/used?
 
 And the last important details are needed:
 
@@ -1054,7 +1058,10 @@ CmdCommand >> fillContextMenu: aMenu using: anActivator
 It creates menu item morph and allows subclasses to define default label and icon:
 
 - ==defaultMenuItemName==
-- ==setUpIconForMenuItem: aMenuItemMorph==
+- ==defaultMenuIcon==.
+
+By default last method uses class side icon name (==defaultMenuIconName==). They both return nil default value.
+So for simple icons just default class side method ==defaultMenuIconName==. It will give you the icon from global ==Smalltalk ui icons== registry.
 
 Subclasses can override building method ==fillContextMenu:using:== to represent items differently. For example they can create menu item with check box or decorate them with special colors.
 
