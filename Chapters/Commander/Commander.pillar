@@ -484,6 +484,7 @@ There are other options:
 - submenu
 - separator between items
 - menu icon
+- menu item tooltip
 - custom menu item
 
 !!!! Menu item order
@@ -570,6 +571,15 @@ For example following method will add random icon for into menu item:
 [[[
 RemoveContactCommand>>defaultMenuIcon
 	^Smalltalk ui icons icons atRandom
+]]]
+
+!!!! Menu item tooltip
+
+To specify tooltip for menu item just define method ==description== on instance side of command or group:
+
+[[[
+RemoveContactCommand>>description
+   ^'Remove selected contant from book'
 ]]]
 
 !!!! Custom menu items
