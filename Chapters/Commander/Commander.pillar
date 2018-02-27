@@ -619,6 +619,56 @@ CmdMenuGroup>>buildContextSubMenuIn: aMenu
 
 You can redefine it in your own group to build very special menus.
 
+!!! World menu example
+
+In this section you will learn how to add commands to the global world menu.
+
+First let's create new command to open contact book window:
+
+[[[
+CmdCommand subclass: #OpenFamilyBookCommand
+	instanceVariableNames: ''
+	classVariableNames: ''
+	package: 'Commander-Examples'
+]]]
+
+[[[
+OpenFamilyBookCommand>>execute
+	CmdContactBookPresenter familyExample
+]]]
+
+To add this command to the global world menu just annotate it using CmdWorldMenuContext:
+
+[[[
+OpenFamilyBookCommand class>>worldMenuActivation
+	<classAnnotation>
+	^CmdContextMenuCommandActivation byRootGroupItemFor: CmdWorldMenuContext
+]]]
+
+And specify better name for menu:
+
+[[[
+OpenFamilyBookCommand class>>defaultMenuItemName
+	^'Family contact book'
+]]]
+
+You can use any kind of tuning described in above sections.
+
+At the end you can add global shortcut to open contact book. Just use world context for shortcut activation:
+
+[[[
+OpenFamilyBookCommand class>>globalShortcutActivation
+	<classAnnotation>
+	^CmdShortcutCommandActivation by: $o meta, $f meta for: CmdWorldMenuContext
+]]]
+
+To make it work you should manualy update world menu registry. Currently it is required when users modifies or creates global shortcuts.
+Evaluate following script and try open book by shortcut:
+
+[[[
+CmdWorldMenuRegistration update
+]]]
+
 !!! Drag and drop example
 
 In this section you will learn how activate commands using drag and drop operation.
