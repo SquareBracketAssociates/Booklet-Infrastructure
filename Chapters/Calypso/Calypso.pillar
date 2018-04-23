@@ -1,8 +1,10 @@
+!! IT IS OUTDATED DOC. Do not use it.
+
 !!Architecture of the new system browser
 
 
 Calypso is a new system browser and tool suite. It is the basis for TelePharo, the remote Pharo IDE.
-It uses the Commander framework to reify commands. 
+It uses the Commander framework to reify commands.
 
 Calypso supports the following features:
 - new navigation model
@@ -26,9 +28,9 @@ Calypso supports the following features:
 --variable view as a special mode for the method group view
 
 Calypso will be part of the new Pharo 70. In this chapter we present the architecture and the key abstractions
-supporting the extensible structure of Calypso. 
+supporting the extensible structure of Calypso.
 
-Calypso manipulates navigation environments which can be scoped and queried. Queries return cursor objects which represent a stream of objects.  
+Calypso manipulates navigation environments which can be scoped and queried. Queries return cursor objects which represent a stream of objects.
 
 
 !!! Calypso navigation model
@@ -49,11 +51,11 @@ It is a navigation environment which is created over some ""system environment""
 ClySystemEnvironment currentImage
 ]]]
 
-A system environment models the image. It includes a package manager, a namespace (globals) and a system announcer. 
+A system environment models the image. It includes a package manager, a namespace (globals) and a system announcer.
 
 A navigation environment provides an interface to query information from it. It organizes caches for all queries. When you browse senders of the message ==do:==, the same result will be returned the second time you browse the same senders. Caches optimize performance and memory usage during navigation.
 
-You can use your own navigation instance instead of the global one. The one above is equivalent to the following expression: 
+You can use your own navigation instance instead of the global one. The one above is equivalent to the following expression:
 [[[
 | env |
 env := ClySystemNavigationEnvironment over: ClySystemEnvironment currentImage
@@ -89,7 +91,7 @@ Or you can create a scope based on some concrete objects (such as classes, packa
 	classScope allClasses
 ]]]
 
-@@todo why is this not working? 
+@@todo why is this not working?
 
 !!! Queries and their results: Cursors
 Once you have a scope, you can execute queries:
@@ -124,14 +126,14 @@ Any query returns an instance of cursor, which provides stream access to the res
 STEF HERE
 
 
-Result is represented by the requested ==ClyEnvironmentContent== subclass. 
+Result is represented by the requested ==ClyEnvironmentContent== subclass.
 
 STEF: is a cursor an instance of ClyEnvironmentContent? No apparently so what is the relationships?
 
 
-In the first example, an instance of ==ClySortedClasses== is sent as the argument. The query method accepts a query instance (subclasses of ClyEnvironmentQuery) or compatible object which responds to the ==asEnvironmentQuery== message. 
+In the first example, an instance of ==ClySortedClasses== is sent as the argument. The query method accepts a query instance (subclasses of ClyEnvironmentQuery) or compatible object which responds to the ==asEnvironmentQuery== message.
 
-The class of the result itself plays the role of the most trivial query: ==ClyEnvironmentSimpleQuery==. 
+The class of the result itself plays the role of the most trivial query: ==ClyEnvironmentSimpleQuery==.
 SEAN: The sentence above is impossible for me to understand.
 
 Simple query is responsible to return all objects accessible from a given scope in the requested form.  For example, you can query all classes in a hierarchical form:
@@ -234,7 +236,7 @@ imageHere
 All these queries never modify the cursor state. They always return a new cursor instance which points to the new result.
 
 
-!!! Tree structure 
+!!! Tree structure
 
 On top of this navigation model, Calypso implements a tree structure. For example, you can look at classes and methods in the same table morph:
 
@@ -343,4 +345,3 @@ imageHere
 
 
 For more details, look at code and read the class comments.
-
