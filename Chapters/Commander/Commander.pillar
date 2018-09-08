@@ -173,9 +173,9 @@ Note that we declared it as an example with the ==<example>== annotation. This m
 
 Commands are reusable objects and applications provide various ways to access them: shortcuts, context menus, buttons, etc.
 This information is attached to command classes as activation strategies. Currently there are three types of activations:
-- ==CmdShortcutCommandActivation==
-- ==CmdContextMenuCommandActivation==
-- ==CmdDragAndDropCommandActivation==
+- ==CmdShortcutActivation==
+- ==CmdContextMenuActivation==
+- ==CmdDragAndDropActivation==
 
 Strategies annotate a command as contextual class annotations. Look at the project ClassAnnotation for details *https://github.com/dionisiydk/ClassAnnotation*.
 
@@ -187,15 +187,15 @@ For example, the following method allows an instance of ==RenameContactCommand==
 [[[
 RenameContactCommand class >> shortcutActivation
 	<classAnnotation>
-	^ CmdShortcutCommandActivation by: $r meta for: ContactBookPresenter
+	^ CmdShortcutActivation by: $r meta for: ContactBookPresenter
 ]]]
 
-Similarly the following method, ==contextMenuActivation==, allows the ==RenameContactCommand== to be executed from a context menu. Note the use of ==CmdContextMenuCommandActivation== in the method, while the previous one was using ==CmdShortcutCommandActivation==.
+Similarly the following method, ==contextMenuActivation==, allows the ==RenameContactCommand== to be executed from a context menu. Note the use of ==CmdContextMenuActivation== in the method, while the previous one was using ==CmdShortcutActivation==.
 
 [[[
 RenameContactCommand class >> contextMenuActivation
 	<classAnnotation>
-	^CmdContextMenuCommandActivation byRootGroupItemFor: ContactBookPresenter
+	^CmdContextMenuActivation byRootGroupItemFor: ContactBookPresenter
 ]]]
 
 If you execute again the family example of  ==ContactBookPresenter==
@@ -337,11 +337,11 @@ Activation methods:
 [[[
 ChangePhoneCommand class >> contextMenuActivation
 	<classAnnotation>
-	^CmdContextMenuCommandActivation byRootGroupItemFor: ContactBookPresenter
+	^CmdContextMenuActivation byRootGroupItemFor: ContactBookPresenter
 
 ChangePhoneCommand class >> shortcutActivation
 	<classAnnotation>
-	^CmdShortcutCommandActivation by: $p meta for: ContactBookPresenter
+	^CmdShortcutActivation by: $p meta for: ContactBookPresenter
 ]]]
 
 !!!! 2. Remove Contact Command
@@ -394,11 +394,11 @@ and activation methods:
 [[[
 RemoveContactCommand class >> contextMenuActivation
 	<classAnnotation>
-	^CmdContextMenuCommandActivation byRootGroupItemFor: ContactBookPresenter
+	^CmdContextMenuActivation byRootGroupItemFor: ContactBookPresenter
 
 RemoveContactCommand class >> shortcutActivation
 	<classAnnotation>
-	^CmdShortcutCommandActivation by: $x meta for: ContactBookPresenter
+	^CmdShortcutActivation by: $x meta for: ContactBookPresenter
 ]]]
 
 !!!! 3. Command to add contact:
@@ -441,11 +441,11 @@ Activation methods:
 [[[
 AddContactCommand class >> contextMenuActivation
 	<classAnnotation>
-	^CmdContextMenuCommandActivation byRootGroupItemFor: ContactBookPresenter
+	^CmdContextMenuActivation byRootGroupItemFor: ContactBookPresenter
 
 AddContactCommand class >> shortcutActivation
 	<classAnnotation>
-	^CmdShortcutCommandActivation by: $n meta for: ContactBookPresenter
+	^CmdShortcutActivation by: $n meta for: ContactBookPresenter
 ]]]
 
 %+Family book menu>file://figures/FamilyMenuDefault.png+
@@ -496,7 +496,7 @@ To change the order the activation strategy should be created with extra paramet
 [[[
 RenameContactCommand >> contextMenuActivation
 	<classAnnotation>
-	^CmdContextMenuCommandActivation byRootGroupItemOrder: 1 for: ContactBookPresenter
+	^CmdContextMenuActivation byRootGroupItemOrder: 1 for: ContactBookPresenter
 ]]]
 
 The lesser order value puts item to the top of menu list.
@@ -522,7 +522,7 @@ And then add this class as extra parameter to the menu activation strategy:
 [[[
 ChangePhoneCommand >> contextMenuActivation
 	<classAnnotation>
-	^CmdContextMenuCommandActivation byItemOf: PhoneMenuGroup for: ContactBookPresenter
+	^CmdContextMenuActivation byItemOf: PhoneMenuGroup for: ContactBookPresenter
 ]]]
 
 It will moves ChangePhoneCommand to extra submenu with name 'PhoneMenuGroup'. You can specify better name as in case of commands:
@@ -642,7 +642,7 @@ To add this command to the global world menu just annotate it using CmdWorldMenu
 [[[
 OpenFamilyBookCommand class>>worldMenuActivation
 	<classAnnotation>
-	^CmdContextMenuCommandActivation byRootGroupItemFor: CmdWorldMenuContext
+	^CmdContextMenuActivation byRootGroupItemFor: CmdWorldMenuContext
 ]]]
 
 And specify better name for menu:
@@ -659,7 +659,7 @@ At the end you can add global shortcut to open contact book. Just use world cont
 [[[
 OpenFamilyBookCommand class>>globalShortcutActivation
 	<classAnnotation>
-	^CmdShortcutCommandActivation by: $o meta, $f meta for: CmdWorldMenuContext
+	^CmdShortcutActivation by: $o meta, $f meta for: CmdWorldMenuContext
 ]]]
 
 To make it work you should manualy update world menu registry. Currently it is required when users modifies or creates global shortcuts.
@@ -690,7 +690,7 @@ Now we can annotate existing command ==AddContactCommand== with drag and drop ac
 [[[
 AddContactCommand class >> dragAndDropActivation
 	<classAnnotation>
-	^CmdDragAndDropCommandActivation for: ContactBookPresenter toDropIn: ContactBookPresenter
+	^CmdDragAndDropActivation for: ContactBookPresenter toDropIn: ContactBookPresenter
 ]]]
 
 First parameter describes context where drag can be started. And last parameter is a context where drop can be executed. In the example above, both contexts are the same presenter which enables drag and drop contacts between contact books.
@@ -998,13 +998,13 @@ Commands are annotated with activation strategy using context where they can be 
 You can inspect all strategies (and their commands) using ClassAnnotation API:
 
 [[[
-CmdShortcutCommandActivation registeredInstances
+CmdShortcutActivation registeredInstances
 ]]]
 
 It will return all shortcuts in the system.
 
 [[[
-CmdContextMenuCommandActivation registeredInstances
+CmdContextMenuActivation registeredInstances
 ]]]
 
 It will return all menu items in the system.
@@ -1018,7 +1018,7 @@ context := (ContactBookPresenter on: ContactBook family) createCommandContext.
 Then you can query all commands suitable for this context:
 
 [[[
-CmdShortcutCommandActivation visibleInstancesInContext: context.
+CmdShortcutActivation visibleInstancesInContext: context.
 ]]]
 
 It returns four shortcuts as we implemented four commands in this section.
@@ -1026,7 +1026,7 @@ It returns four shortcuts as we implemented four commands in this section.
 And you can filter them to see only active commands:
 
 [[[
-CmdShortcutCommandActivation activeInstancesInContext: context.
+CmdShortcutActivation activeInstancesInContext: context.
 ]]]
 
 It returns single activation because only the add command can be executed without selected item (by default the table selection is empty).
@@ -1034,7 +1034,7 @@ It returns single activation because only the add command can be executed withou
 To execute collected commands you should create the command activator instance:
 
 [[[
-activator := (CmdShortcutCommandActivation activeInstancesInContext: context) first newActivatorFor: context.
+activator := (CmdShortcutActivation activeInstancesInContext: context) first newActivatorFor: context.
 ]]]
 
 It encapsulates the given context and performs all required logic to prepare the command for its execution and to apply result after the execution:
@@ -1046,7 +1046,7 @@ activator executeCommand.
 There is a suitable method to enumerate all commands and to execute them with a prepared activator instance:
 
 [[[
-CmdShortcutCommandActivation
+CmdShortcutActivation
 	activateAllInContext: context
 	by: [:activator | activator executeCommand].
 ]]]
@@ -1056,7 +1056,7 @@ CmdShortcutCommandActivation
 There is a lot of different menu types: context menu, toolbar, morphic halo menu, etc.
 All of them are very similar: they show set of items to a user and when the user selects one, the action associated with item is evaluated. The main difference between them is the way they are displayed to the user.
 
-The commander library allows the building of different kind of menus based on commands and first class groups. Concrete type of menu is represented by concrete type of activation strategy, a subclass of ==CmdMenuCommandActivationStrategy==. The simplest example is ==CmdContextMenuCommandActivation== which we used to define context menu in our presenter example. Now it is only available in Commander. For other examples look at the Calypso browser.
+The commander library allows the building of different kind of menus based on commands and first class groups. Concrete type of menu is represented by concrete type of activation strategy, a subclass of ==CmdMenuCommandActivationStrategy==. The simplest example is ==CmdContextMenuActivation== which we used to define context menu in our presenter example. Now it is only available in Commander. For other examples look at the Calypso browser.
 
 In summary, users annotate commands with menu activations and Commander builds menus using them:
 
@@ -1080,7 +1080,7 @@ To set up these properties there are few instance creation methods:
 The tree structure of menu is represented by ==CmdMenu== instance. It should be created with concrete class of menu activation. For example for context menu it would be:
 
 [[[
-menu := CmdMenu activatedBy: CmdContextMenuCommandActivation.
+menu := CmdMenu activatedBy: CmdContextMenuActivation.
 ]]]
 
 And then you can ask it to build items which are active for given context:
@@ -1103,10 +1103,10 @@ It is the way how to implement new kind of menus. First, create new subclass of 
 
 Look for details at package ==Commander-Activators-ContextMenu== which implements classic context menu based on commands.
 
-For example ==CmdContextMenuCommandActivation== implements helper method to create context menu for single application context. So previous example with building menu can be simplified:
+For example ==CmdContextMenuActivation== implements helper method to create context menu for single application context. So previous example with building menu can be simplified:
 
 [[[
-(CmdContextMenuCommandActivation buildMenuFor: World inContext: context) openInWorld
+(CmdContextMenuActivation buildMenuFor: World inContext: context) openInWorld
 ]]]
 
 Context menu extends command with menu building method:
@@ -1127,12 +1127,12 @@ Subclasses can override building method ==fillContextMenu:using:== to represent 
 
 !!! Shortcut activation
 
-As you saw in example section ==CmdShortcutCommandActivation== is used to annotated commands with shortcut:
+As you saw in example section ==CmdShortcutActivation== is used to annotated commands with shortcut:
 
 [[[
 RenameContactCommand class >> shortcutActivation
 	<classAnnotation>
-	^ CmdShortcutCommandActivation by: $r meta for: ContactBookPresenter
+	^ CmdShortcutActivation by: $r meta for: ContactBookPresenter
 ]]]
 
 There are extra helper methods for standard shortcuts:
@@ -1144,7 +1144,7 @@ So we can rewrite activation using:
 [[[
 RenameContactCommand class >> shortcutActivation
 	<classAnnotation>
-	^ CmdShortcutCommandActivation renamingFor: ContactBookPresenter
+	^ CmdShortcutActivation renamingFor: ContactBookPresenter
 ]]]
 
 Notice that annotations are cached and cache is updated only when declaration method is changed. It means that you should manually update cache when you modify helper methods like ==renamingFor:==:
