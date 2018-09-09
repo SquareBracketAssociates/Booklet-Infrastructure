@@ -7,6 +7,10 @@ In this chapter you will learn about a new library to manage commands. The libra
 Commander models application actions as first class objects following the Command design pattern.
 Every action is implemented as a separate command class (subclass of ==CmdCommand==) with an ==execute== method and all state required for execution.
 
+
+
+
+
 !!! Contact Book Example
 
 Let's look at how we can apply commands to control a simple book of contacts.
@@ -160,7 +164,7 @@ Now we are able to show a family phone book with our Spec UI:
 
 [[[
 ContactBookPresenter class >> familyExample
-	<example>
+	<sampleInstance>
 	^ (self on: ContactBook family) openWithSpec
 ]]]
 
@@ -271,7 +275,7 @@ It is your responsibility to manage updates between the application and model. Y
 But Commander provides a very simple way to apply the result of a command which can be also used to update the view. The ==applyResultInContext:== method is called when the command is executed. You can implement it on your commands to produce the desired effect in the context of your application:
 
 [[[
-RenameContactCommand>>applyResultInContext: aToolContext
+RenameContactCommand >> applyResultInContext: aToolContext
 	super applyResultInContext: aToolContext.
 
 	aToolContext updateView
@@ -308,10 +312,14 @@ CmdCommand subclass: #ChangePhoneCommand
 	instanceVariableNames: 'contact newPhone'
 	classVariableNames: ''
 	package: 'Commander-Examples'
+]]]
 
+[[[
 ChangePhoneCommand >> execute
 	contact phone: newPhone
+]]]
 
+[[[
 ChangePhoneCommand >> prepareFullExecutionInContext: aToolContext
 	super prepareFullExecutionInContext: aToolContext.
 
@@ -322,12 +330,16 @@ ChangePhoneCommand >> prepareFullExecutionInContext: aToolContext
 		initialAnswer: contact phone
 		title: 'Set new phone for contact'.
 	newPhone isEmptyOrNil | (newPhone = contact name) ifTrue: [ ^ CmdCommandAborted signal ]
+]]]
 
+[[[
 ChangePhoneCommand >> applyResultInContext: aToolContext
 	super applyResultInContext: aToolContext.
 
 	aToolContext updateView
+]]]
 
+[[[
 ChangePhoneCommand >> defaultMenuItemName
 	^'New phone'
 ]]]
@@ -338,7 +350,9 @@ Activation methods:
 ChangePhoneCommand class >> contextMenuActivation
 	<classAnnotation>
 	^CmdContextMenuCommandActivation byRootGroupItemFor: ContactBookPresenter
+]]]
 
+[[[
 ChangePhoneCommand class >> shortcutActivation
 	<classAnnotation>
 	^CmdShortcutCommandActivation by: $p meta for: ContactBookPresenter
@@ -351,21 +365,29 @@ CmdCommand subclass: #RemoveContactCommand
 	instanceVariableNames: 'contactBook contact'
 	classVariableNames: ''
 	package: 'Commander-Examples'
+]]]
 
+[[[
 RemoveContactCommand >> execute
 	contactBook removeContact: contact
+]]]
 
+[[[
 RemoveContactCommand >> prepareFullExecutionInContext: aToolContext
 	super prepareFullExecutionInContext: aToolContext.
 
 	contactBook := aToolContext selectedContactBook.
 	contact := aToolContext selectedContact.
+]]]
 
+[[[
 RemoveContactCommand >> applyResultInContext: aToolContext
 	super applyResultInContext: aToolContext.
 
 	aToolContext updateView
+]]]
 
+[[[
 RemoveContactCommand >> defaultMenuItemName
 	^'Remove'
 ]]]
@@ -395,7 +417,9 @@ and activation methods:
 RemoveContactCommand class >> contextMenuActivation
 	<classAnnotation>
 	^CmdContextMenuCommandActivation byRootGroupItemFor: ContactBookPresenter
+]]]
 
+[[[
 RemoveContactCommand class >> shortcutActivation
 	<classAnnotation>
 	^CmdShortcutCommandActivation by: $x meta for: ContactBookPresenter
@@ -408,10 +432,14 @@ CmdCommand subclass: #AddContactCommand
 	instanceVariableNames: 'contactBook contact'
 	classVariableNames: ''
 	package: 'Commander-Examples'
+]]]
 
+[[[
 AddContactCommand >> execute
 	contactBook addContact: contact
+]]]
 
+[[[
 AddContactCommand >> prepareFullExecutionInContext: aToolContext
 	| nameAndPhone pair |
 	super prepareFullExecutionInContext: aToolContext.
@@ -424,12 +452,15 @@ AddContactCommand >> prepareFullExecutionInContext: aToolContext
 	nameAndPhone isEmptyOrNil ifTrue: [ ^ CmdCommandAborted signal ].
 	pair := (';' split: nameAndPhone).
 	contact := CmdContact named: pair first phone: pair last
+]]]
 
+[[[
 AddContactCommand >> applyResultInContext: aToolContext
 	super applyResultInContext: aToolContext.
 
 	aToolContext updateView
-
+]]]
+[[[
 AddContactCommand >> defaultMenuItemName
 	^'New contact'
 ]]]
@@ -442,7 +473,9 @@ Activation methods:
 AddContactCommand class >> contextMenuActivation
 	<classAnnotation>
 	^CmdContextMenuCommandActivation byRootGroupItemFor: ContactBookPresenter
+]]]
 
+[[[
 AddContactCommand class >> shortcutActivation
 	<classAnnotation>
 	^CmdShortcutCommandActivation by: $n meta for: ContactBookPresenter
@@ -642,6 +675,7 @@ To add this command to the global world menu just annotate it using CmdWorldMenu
 [[[
 OpenFamilyBookCommand class>>worldMenuActivation
 	<classAnnotation>
+
 	^CmdContextMenuCommandActivation byRootGroupItemFor: CmdWorldMenuContext
 ]]]
 
@@ -659,6 +693,7 @@ At the end you can add global shortcut to open contact book. Just use world cont
 [[[
 OpenFamilyBookCommand class>>globalShortcutActivation
 	<classAnnotation>
+
 	^CmdShortcutCommandActivation by: $o meta, $f meta for: CmdWorldMenuContext
 ]]]
 
@@ -716,8 +751,8 @@ To prepare command instance in two steps we need implement two methods:
 
 [[[
 AddContactCommand >> prepareExecutionInDragContext: aToolContext
-	super prepareExecutionInDragContext: aToolContext.
 
+	super prepareExecutionInDragContext: aToolContext.
 	contact := aToolContext selectedContact
 ]]]
 
@@ -1178,4 +1213,33 @@ Users then do not need to think how morphs are connected in case of Spec.
 
 Other libraries/frameworks can privide similar integration to simplify Commander usage.
 
-!!! Conclusion
+!!! Underlying mechanisms
+
+Commands can be used without annotations. Just instantiate it manually and execute:
+
+[[[
+SycRenamePackageCommand new 
+	package: aPackage;
+	newName: #newPackageName;
+	execute
+]]]
+
+You do not need the 
+
+[[[
+browser := ClyFullBrowser openOnClass: Point.
+context := ClyClassContextOfFullBrowser ofSelection: browser classSelection for: browser.
+
+commands := { SycRenameClassCommand new. SycAddSubclassCommand  new}.
+activators := commands 
+	collect: [:each | each asCommandActivator context: context].
+activators first executeCommand.
+]]]
+
+ 
+==#asCommandActivator== is based on ==CmdManualActivationStrategy==. No pragmas are used here.
+
+By default manual activation assumes that command is prepared (initialized) by user. And you don't need a context to execute it  execution as in example. But with a given context, a command follows the full activation logic where it is initialized with information from context.
+
+A little summary: You are able to manually create context, activation strategy and commands. It can be improved. But Commander does not restrict it.  Commander promotes annotation-based mechanism to manage them. But this is just a specific way how to do it.
+
