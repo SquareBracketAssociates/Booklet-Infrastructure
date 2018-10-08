@@ -1,7 +1,7 @@
-!! IT IS OUTDATED DOC. Do not use it.
+
 
 !!Architecture of the new system browser
-
+PAY ATTENTION THIS CHAPTER IS OUTDATED
 
 Calypso is a new system browser and tool suite. It is the basis for TelePharo, the remote Pharo IDE.
 It uses the Commander framework to reify commands.
@@ -27,14 +27,12 @@ Calypso supports the following features:
 --methods inherited from traits are not shown by default
 --variable view as a special mode for the method group view
 
-Calypso will be part of the new Pharo 70. In this chapter we present the architecture and the key abstractions
-supporting the extensible structure of Calypso.
+In this chapter we present the architecture and the key abstractions supporting the extensible structure of Calypso.
 
 Calypso manipulates navigation environments which can be scoped and queried. Queries return cursor objects which represent a stream of objects.
 
 
 !!! Calypso navigation model
-
 
 !!!! System and navigation environments
 In Calypso, users query environments to get a specific set of objects such as classes, methods…
@@ -42,13 +40,13 @@ In Calypso, users query environments to get a specific set of objects such as cl
 First you need to get a ""navigation"" environment instance. There is a default one for the current image:
 [[[
 | env |
-env := ClySystemNavigationEnvironment currentImage
+env := ClyNavigationEnvironment currentImage
 ]]]
 
 It is a navigation environment which is created over some ""system environment"". In this case, it is the current image:
 
 [[[
-ClySystemEnvironment currentImage
+ClyEnvironment currentImage
 ]]]
 
 A system environment models the image. It includes a package manager, a namespace (globals) and a system announcer.

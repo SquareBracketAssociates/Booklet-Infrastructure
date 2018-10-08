@@ -7,16 +7,14 @@ In this chapter you will learn about a new library to manage commands. The libra
 Commander models application actions as first class objects following the Command design pattern.
 Every action is implemented as a separate command class (subclass of ==CmdCommand==) with an ==execute== method and all state required for execution.
 
-
-
-
-
 !!! Contact Book Example
 
 Let's look at how we can apply commands to control a simple book of contacts.
 The code of example is packaged in the ==Commander-Examples== package, so
-you can load it and play along. If the package is not present in your
-system, load it using:
+you can load it and play along. 
+
+The following breaks on latest Pharo version!
+If the package is not present in your system, load it using:
 
 [[[
 Metacello new
@@ -45,7 +43,9 @@ Contact >> printOn: aStream
 	aStream nextPut: $(.
 	aStream nextPutAll: name.
 	aStream nextPut: $).
+]]]
 
+[[[
 Contact class >> named: aString phone: aString2
 	^ self new
 		name: aString;
@@ -67,17 +67,26 @@ Object subclass: #ContactBook
 [[[
 ContactBook >> initialize
 	super initialize.
-	contents := OrderedCollection new.
+	contents := OrderedCollection new
+]]]
 
+[[[
 ContactBook >> addContact: aContact
 	contents add: aContact
+]]]
 
+[[[
 ContactBook >> add: contactName phone: phone
 	| contact |
-	contact := CmdContact named: contactName phone: phone.
+	contact := Contact named: contactName phone: phone.
 	self addContact: contact.
 	^contact
+]]]
 
+
+
+
+[[[
 ContactBook >> includesContact: aContact
 	^ contents includes: aContact
 ]]]
@@ -135,13 +144,17 @@ ComposablePresenter subclass: #ContactBookPresenter
 [[[
 ContactBookPresenter >> setModelBeforeInitialization: aDomainObject
 	contactBook := aDomainObject
+]]]
 
+[[[
 ContactBookPresenter >> initializeWidgets
 	table := self newList.
 	table numberOfColumns: 2 withWidths: #(250 250).
 	table displayBlock: [ :contact | {contact name. contact phone} ].
 	table items: contactBook contents.
+]]]
 
+[[[
 ContactBookPresenter class >> defaultSpec
 	^ SpecLayout composed
 		newColumn: [ :c | c add: #table ];
