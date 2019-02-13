@@ -316,7 +316,7 @@ Then reopen the window, select a contact and press ==cmd+r== (on Mac). You will 
 
 !!! More Commands
 
-Finally, let's try to create a few other commands. Since the presenter's infrasturcture has already been set up, the creation of new commands is a very straightforward process:
+Finally, let's try to create a few other commands. Since the presenter's infrastructure has already been set up, the creation of new commands is a very straightforward process:
 
 !!!! 1. Modify Phone Number Command
 
@@ -499,13 +499,13 @@ AddContactCommand class >> shortcutActivation
 
 %+Family book menu>file://figures/FamilyMenuDefault.png+
 
-As you create more commands, pay attention for refactoring opportunities. For example, our commands in this tutorial duplicate both state (==contact==) and behavior (==applyResultInContext:==). As an exercise, refactor to your taste by extracting a common superclass and so on.
+As you create more commands, pay attention to refactoring opportunities. For example, our commands in this tutorial duplicate both state (==contact==) and behavior (==applyResultInContext:==). As an exercise, refactor to your taste by extracting a common superclass and so on.
 
 @@todo Stef here
 
 !!! Extra command conditions
 
-Currently, there will be error if you try to rename a contact when no item is selected in the table.
+Currently, there will be an error if you try to rename a contact when no item is selected in the table.
 
 Normally the menu should not include items in such cases or they should be disabled.
 
@@ -538,9 +538,9 @@ There are other options:
 
 !!!! Menu item order
 
-In our example 'Rename' item was placed at the end of menu because by default items are sorted in alphabetical order.
+In our example the 'Rename' item was placed at the end of menu because by default items are sorted in alphabetical order.
 
-To change the order the activation strategy should be created with extra parameter:
+To change the order the activation strategy should be created with an extra parameter:
 
 [[[
 RenameContactCommand >> contextMenuActivation
@@ -554,8 +554,8 @@ The lesser order value puts item to the top of menu list.
 
 !!!! Submenu
 
-Commander allows create hierarchical menu using reified menu groups.
-Imaging that you want put 'New phone' command under 'Phone operations' submenu.
+Commander allows the creation of a hierarchical menu using reified menu groups.
+Imaging that you want put the 'New phone' command under the 'Phone operations' submenu.
 
 First you need new subclass of ==CmdMenuGroup== class:
 
@@ -574,7 +574,7 @@ ChangePhoneCommand >> contextMenuActivation
 	^CmdContextMenuActivation byItemOf: PhoneMenuGroup for: ContactBookPresenter
 ]]]
 
-It will moves ChangePhoneCommand to extra submenu with name 'PhoneMenuGroup'. You can specify better name as in case of commands:
+It will move the ChangePhoneCommand to extra submenu with name 'PhoneMenuGroup'. You can specify better name as in case of commands:
 
 [[[
 PhoneMenuGroup>>name
@@ -605,7 +605,7 @@ PhoneMenuGroup>>isInlined
 
 !!!! Menu icons
 
-To specify simple icon the command should implement class side method ==defaultMenuIconName==. For example we can add icon to the ==RemoveContactCommand==:
+To specify a simple icon the command should implement class side method ==defaultMenuIconName==. For example we can add an icon to the ==RemoveContactCommand==:
 
 [[[
 RemoveContactCommand class>>defaultMenuIconName
@@ -614,8 +614,8 @@ RemoveContactCommand class>>defaultMenuIconName
 
 %+Iconic menu item>file://Figures/FamilyMenuWithIcon.png+
 
-If you need complex icon which depends on command state you should implement instance side method #defaultMenuIcon.
-For example following method will add random icon for into menu item:
+If you need a complex icon which depends on command state you should implement instance side method #defaultMenuIcon.
+For example following method will add a random icon for the menu item:
 
 [[[
 RemoveContactCommand>>defaultMenuIcon
@@ -624,7 +624,7 @@ RemoveContactCommand>>defaultMenuIcon
 
 !!!! Menu item tooltip
 
-To specify tooltip for menu item just define method ==description== on instance side of command or group:
+To specify a tooltip for a menu item just define the method ==description== on instance side of command or group:
 
 [[[
 RemoveContactCommand>>description
@@ -633,7 +633,7 @@ RemoveContactCommand>>description
 
 !!!! Custom menu items
 
-When Commander builds context menu it asks command itself to build view (a morph) for menu item.
+When Commander builds a context menu it asks the command itself to build the view (a morph) for a menu item.
 By default CmdCommand builds standard menu item morph but subclasses can redefine it to be represented specifically.
 
 For example we can represent item with different color:
